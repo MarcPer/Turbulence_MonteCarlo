@@ -14,11 +14,10 @@ close all; clear all;
 % Set running folder
 user_folder = userpath;
 user_folder(end) = [];
-cd(user_folder);
+codeFolder = cd(user_folder);
 cd ../..
 user_folder = fullfile(pwd, 'Dropbox');
-cd(fullfile(user_folder, 'MATLAB', ...
-    'Turb_propagation', 'Phase_screen'));
+cd(codeFolder);
 
 % Import additional functions
 fun_folder = fullfile(user_folder, 'MATLAB', ...
