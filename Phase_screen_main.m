@@ -86,37 +86,19 @@ Phase_screen_init;
 params_flag = 0;        % Unflag Phase_screen_params.m script
 %% RUN SIMULATION
 % Loop over turbulence strengths
-for idxg = 1 : leng
+for idxStrength = 1 : leng
     % Check for cancel button press
     if abort
         break
     end
         
-    fprintf('Turbulence strength: %u of %u\n', idxg, leng);
+    fprintf('Turbulence strength: %u of %u\n', idxStrength, leng);
     h = waitbar(0, '0%', 'Name', 'Simulating turbulence...', ...
          'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
     setappdata(h,'canceling',0);
     % Loop over realizations
     for idxreal = 1 : nreals
-                        
-        % Loop over phase screens
-        for idxscr = ztmin_idx : ztmax_idx
-            if isinf(r0(idxg, idxscr))
-                phz(:,:,idxscr) = 0;
-            else
-                [phz_lo, phz_hi] = ft_sh_phase_screen( ...
-                    r0(idxg, idxscr), N, delta(idxscr), L0, l0);
-                phz(:,:,idxscr) = phz_lo + phz_hi;
-                if coinc        % Is it a coincidence simulation?
-                    if invers   % Is there momentum inversion?
-                        phz(:,:,idxscr) = phz(:,:,idxscr) + ...
-                            rot90(phz(:,:,idxscr),2);
-                    else
-                        phz(:,:,idxscr) = 2*phz(:,:,idxscr);
-                    end
-                end
-            end
-        end
+        phz = generateScreen(simParams, idxStrength);
     
         % Simulate turbulent propagation
         [xn yn Uout_real] = ang_spec_multi_prop(Uin, wvl, ...
@@ -127,7 +109,7 @@ for idxg = 1 : leng
         Iout_real = Iout_real/sum(Iout_real(:));
         
         % Incoherent sum of patterns from different realizations
-        Iout(:,:,idxg) = Iout(:,:,idxg) + Iout_real;
+        Iout(:,:,idxStrength) = Iout(:,:,idxStrength) + Iout_real;
         
         % Check for cancel button press
         if getappdata(h,'canceling')
@@ -139,7 +121,7 @@ for idxg = 1 : leng
        
     end
     % Output intensity for given gamma
-    Iout(:,:,idxg) = Iout(:,:,idxg)/nreals;
+    Iout(:,:,idxStrength) = Iout(:,:,idxStrength)/nreals;
     delete(h);
 end
 
@@ -161,14 +143,14 @@ end
 
 % Power going through slit
 if coinc
-    for idxg = 1 : leng
-    A = Iout(:,:,idxg);
-    Pslit(idxg) = CoincSlitIntegrate(A,a);
+    for idxStrength = 1 : leng
+    A = Iout(:,:,idxStrength);
+    Pslit(idxStrength) = CoincSlitIntegrate(A,a);
     end
 else
-    for idxg = 1 : leng
-        A = Iout(:,:,idxg);
-        Pslit(idxg) = SlitIntegrate(A,a);
+    for idxStrength = 1 : leng
+        A = Iout(:,:,idxStrength);
+        Pslit(idxStrength) = SlitIntegrate(A,a);
     end
 end
 

@@ -1,182 +1,175 @@
 classdef SimulationParameters<handle
     %   Distance unit: m
     
-    properties(GetAccess = public, SetAccess = public)
-        % Geometry
-        propagationDistance = 3000;
-        numberOfPhasePlanes = 20;
-        % Turbulence
-        gammaStrength = [0; 4.29; 7.99; 12.1; 16.6; 21.3; 27.9] *1e-6;
-        outerScale = Inf;
-        innerScale = 0;
+    properties(Access = public)
+    	% USER INPUT
+		% Geometry
+        isFourthOrder;
+        propagationDistance;
+        numberOfPhasePlanes;
+		turbulenceRegionStartPosition;
+		turbulenceRegionEndPosition;
+        % Turbulence Statistics
+        gammaStrength;
+        outerScale;
+        innerScale;
         % Beam
-        wavelength = 325e-9;
-        beamWidthObsPlane = 60e-6;
+        wavelength;
+        waistAtObservationPlane;    % e-2 intensity radius
         % Simulation
-        numberOfRealizations = 50;
-        transverseGridSize = 512;
-        gridSpacingSourcePlane = 5.5e-5;
-        gridSpacingObservationPlane = 7e-6;
+        numberOfRealizations;
+        transverseGridSize;
+        gridSpacingSourcePlane;
+        gridSpacingObservationPlane;
+		transverseSeparationInR0Units;
     end
     
+    properties(GetAccess = public, SetAccess = private)
+		% DERIVED PARAMETERS
+		waveNumber;
+		planePositions;
+		gridSpacingVector;
+		friedCoherenceRadiusMatrix; %{i,j} -> Turb. strength, Prop. plane
+        totalFriedCoherenceRadiusByStrength;
+        regionOfInterestAtSourcePlane;
+        regionOfInterestAtObservationPlane;
+    end
+    
+    properties(Access = private)
+       complexBeamParameter; 
+    end
        
     methods(Access = public)
-        function MM = MatrizMueller(fileID)
-            MM.fileID = fileID;
-            MM.getHeader();
-            MM.data = struct;
-            MM.getTableHeader();
-            MM.retrieveData();
+        function simParams = SimulationParameters(varargin)
+           simParams.checkIfFourthOrder(varargin);
+           fData = simParams.openParametersFile();
+           simParams.readParameters(fData);
+           simParams.setDefaultValueForBlankParameters();
+           simParams.computeDerivedQuantities();
         end
-        
-        function createMatrices(MM, numMat)
-            if nargin == 1
-                numMat = 1;
-            end
-            
-            numAngles = length(MM.data.angle);
-            
-            MM.matrix = zeros(4,4,numMat,numAngles);
-            m = zeros(5,1);
-            tableHeader = fieldnames(MM.data);
-            
-            for ang = 1 : numAngles
-                if ismember('error', tableHeader)
-                    errorVect = [MM.data.(tableHeader{5})(ang); ...
-                        MM.data.(tableHeader{7})(ang); ...
-                        MM.data.(tableHeader{9})(ang) ; ...
-                        MM.data.(tableHeader{11})(ang); ...
-                        MM.data.(tableHeader{13})(ang)];
-                else
-                    errorVect = zeros(5,1);
-                end
-
-                for i = 1 : numMat
-                    m(1) = -MM.data.(tableHeader{4})(ang);
-                    m(2) = MM.data.(tableHeader{6})(ang);
-                    m(3) = MM.data.(tableHeader{8})(ang);
-                    m(4) = MM.data.(tableHeader{10})(ang);
-                    m(5) = MM.data.(tableHeader{12})(ang);
-
-                    m = m + errorVect .* randn(5,1);
-
-                    MM.matrix(:,:,i,ang) = ...
-                        [1 m(1) 0 0; m(1) m(2) 0 0; ...
-                        0 0 m(3) m(4); 0 0 -m(4) m(5)];
-                end
-            end
-        end
-        
-        function numUnphysical = filterUnphysical(MM)
-            % [~, ~, numRand, ~] = size(MM.matrix);
-            numMat = length(MM.matrix(1,1,:));
-            MM.eigenValues = zeros(4, numMat);
-            negPos = [];
-            
-            for i = 1 : numMat
-                hmat = Hmatrix(MM.matrix(:,:,i));
-                eigenVal = real(eig(hmat));
-                if (any(eigenVal < 0))
-                    negPos = [negPos; i];
-                end
-                eigenVal = eigenVal / sum(eigenVal);
-                MM.eigenValues(:,i) = eigenVal;
-            end
-            
-            MM.matrix(:,:,negPos) = [];
-            MM.eigenValues(:,negPos) = [];
-            MM.data.angle(negPos) = [];
-            numUnphysical = length(negPos);
-            
-        end
-        
-        function generateDmEm(MM)
-            numMat = length(MM.matrix(1,1,:));
-            MM.DmEm = zeros(numMat, 2);
-            
-            for i = 1 : numMat
-                [MM.DmEm(i,1), MM.DmEm(i,2)] = calcDmEm(MM.eigenValues(:,i));
-            end
-            
-        end
-        
     end
       
-        
-        
-     methods(Access = private)   
-        function getHeader(MM)
-            header = fgetl(MM.fileID);
-            re = regexp(header, '([ \w]+) - ([\d\.]+)','tokens');
-            if (isempty(re))
-                MM.material = 'NotFound';
-                MM.wavelength = 'NotFound';
+    methods(Access = private)
+        function checkIfFourthOrder(obj,isFourthOrder)
+            if (numel(isFourthOrder) == 0)
+                obj.isFourthOrder = 0;
+            elseif (numel(isFourthOrder) == 1)
+                obj.isFourthOrder = isFourthOrder;
             else
-                MM.material = re{1}{1};
-                MM.wavelength = str2double(re{1}{2});
-            end
-            
-        end
-        
-        function getTableHeader(MM)
-            % Scan for table header
-            [isAngle, isTheta] = deal(0);
-            while(~isAngle && ~isTheta)
-                currentLine = fgetl(MM.fileID);
-                isAngle = ~isempty(regexpi(currentLine, 'angle.+error', 'ONCE'));
-                isTheta = ~isempty(regexpi(currentLine, 'theta.+error', 'ONCE'));
-            end
-            
-            % Use column names for keys in the MM object structure
-            reHeader = regexp(currentLine, '[\w\d-()\/]+', 'match');
-            keyCount = 1;
-            
-            for i = 1 : length(reHeader)
-                reHeader{i} = regexprep(reHeader{i}, '-', 'minus');
-                reHeader{i} = regexprep(reHeader{i}, '\/', 'div');
-                reHeader{i} = regexprep(reHeader{i}, '[()]', '_');
-                reHeader{i} = regexprep(reHeader{i}, 'theta', 'angle');
-                if (i>1)
-                    fieldNames = fieldnames(MM.data);
-                    if ismember(reHeader{i},fieldNames)
-                        keyCount = keyCount + 1;
-                        reHeader{i} = [reHeader{i}, num2str(keyCount)];
-                    end
-                end
-                MM.data.(reHeader{i}) = [];
-            end
-        end
-        
-        function retrieveData(MM)
-            timeOut = 0;
-            reHeader = fieldnames(MM.data);
-            pattern = '-?[\d\.]+';
-            
-            while (timeOut < 1000)
-                timeOut = timeOut + 1;
-                string = fgetl(MM.fileID);
-                if (isfloat(string))
-                    break
-                end
-                if (~isempty(regexp(string,'[a-zA-Z_]','ONCE')))
-                    break
-                end
-                if (ischar(string))
-                    re = regexprep(string, '\-+\s', '0\t');
-                    re = regexprep(re, '\-+$', '0');
-                    re = regexp(re,pattern,'match');
-                    if (~isempty(re))
-                        for i = 1 : length(re)
-                            MM.data.(reHeader{i}) = ...
-                                [MM.data.(reHeader{i}); str2double(re{i})];
-                        end
-                    end
+                if (strcmpi('fourthorder',isFourthOrder{1}))
+                    obj.isFourthOrder = isFourthOrder{2};
                 end
             end
         end
-        
-        
+        function readParameters(obj,fData)
+            hashTable = regexp(fData, '(\w+)\s*:\s*([\w\.\-\,\s]+)$', 'tokens', 'lineanchors');
+            for i = 1 : length(hashTable)
+                if (length(hashTable{i}) == 2)
+                    splitStr = regexprep(hashTable{i}{2},'\s+', '');
+                    splitStr = regexp(splitStr, '[\,]+', 'split');
+                    obj.(hashTable{i}{1}) = sort(str2double(splitStr));
+                end
+            end
+        end
+        function setDefaultValueForBlankParameters(obj)
+            z0 = obj.turbulenceRegionStartPosition;
+            z1 = obj.turbulenceRegionEndPosition;
+            transvSep = obj.transverseSeparationInR0Units;
+            
+           if (isnan(z0) || isempty(z0))
+              obj.turbulenceRegionStartPosition = 0;
+           end
+           if (isnan(z1) || isempty(z1))
+              obj.turbulenceRegionEndPosition = obj.propagationDistance;
+           end
+           if (isempty(transvSep))
+               obj.transverseSeparationInR0Units = 0;
+           end
+        end
+        function computeDerivedQuantities(obj)
+           wvl = obj.wavelength;
+           L = obj.propagationDistance;
+           npl = obj.numberOfPhasePlanes;
+           delta1 = obj.gridSpacingSourcePlane;
+           deltan = obj.gridSpacingObservationPlane;
+           wn = obj.waistAtObservationPlane;
+           
+           obj.waveNumber =  2*pi/wvl;
+           k = obj.waveNumber;
+           obj.planePositions = linspace(0, L, npl);
+           z = obj.planePositions;
+           
+           obj.complexBeamParameter = -L -1i*k*wn^2/2;
+           
+           obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
+           w1 = wn*sqrt(1 + 2*L/ (k*wn^2));
+           obj.regionOfInterestAtSourcePlane = 4*w1;
+           obj.regionOfInterestAtObservationPlane = 4*wn;
+           
+           obj.computeFriedCoherenceRadiusMatrix();
+        end
+        function computeFriedCoherenceRadiusMatrix(obj)
+            L = obj.propagationDistance;
+            z = obj.planePositions;
+            npl = obj.numberOfPhasePlanes;
+            zmin = obj.turbulenceRegionStartPosition;
+            zmax = obj.turbulenceRegionEndPosition;
+            g = obj.gammaStrength';
+            if (obj.isFourthOrder)
+                k = obj.waveNumber/2;
+            else
+                k = obj.waveNumber;
+            end
+            
+            zmask = (z > zmin & z < zmax);
+            ztmin_idx = find(zmask, 1, 'first');
+            ztmax_idx = find(zmask, 1, 'last');
+            s = sum((1-z(ztmin_idx:ztmax_idx)/L).^(5/3));
+            
+            r0 = (0.423 * k^2/(7.75 * L^(5/3) * s) * g.^2).^(-3/5);
+            r0 = repmat(r0, 1, npl);
+            r0 = r0 .* repmat(zmask, length(g), 1);
+            r0(isinf(1./r0)) = inf;
+            r0(isnan(r0)) = inf;
+            
+            obj.friedCoherenceRadiusMatrix = r0;
+            
+            aux_mat = repmat( (z .* zmask)/L,length(g),1);
+            obj.totalFriedCoherenceRadiusByStrength = ...
+                sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
+        end
     end
-    
+        
+    methods(Static)
+        function fData = openParametersFile()
+            fid = fopen('inputParameters.dat');
+            try
+                fData = fread(fid, inf, '*char');
+                fData = fData';
+            catch exception
+                fprintf('Error reading inputParameters.dat.');
+                fclose(fid);
+                rethrow(exception);
+            end
+            fclose(fid);
+        end
+        function sg = superGaussianFilter(obj)
+            [x1, y1] = obj.getMeshGridAtSourcePlane();
+            N = obj.transverseGridSize;
+            sg = exp(-(x1/(0.47*N*delta1)).^16 ... 
+                -(y1/(0.47*N*delta1)).^16);
+        end
+        function Uin = getInputField(obj)
+            [x1,y1] = obj.getMeshGridAtSourcePlane();
+            qz = obj.complexBeamParameter;
+            k = obj.waveNumber;
+            Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
+        end
+        function [x1, y1] = getMeshGridAtSourcePlane(obj)
+            N = obj.transverseGridSize;
+            delta1 = obj.gridSpacingSourcePlane;
+            [x1,y1] = meshgrid((-N/2 : N/2-1) * delta1);
+        end
+    end
 end
 
