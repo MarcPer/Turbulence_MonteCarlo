@@ -47,6 +47,59 @@ classdef SimulationParameters<handle
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
         end
+        function sg = superGaussianFilter(obj)
+            [x1, y1] = obj.getMeshGridAtSourcePlane();
+            N = obj.transverseGridSize;
+            sg = exp(-(x1/(0.47*N*delta1)).^16 ... 
+                -(y1/(0.47*N*delta1)).^16);
+        end
+        function Uin = getInputField(obj)
+            [x1,y1] = obj.getMeshGridAtSourcePlane();
+            qz = obj.complexBeamParameter;
+            k = obj.waveNumber;
+            Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
+        end
+        function [x1, y1] = getMeshGridAtSourcePlane(obj)
+            N = obj.transverseGridSize;
+            delta1 = obj.gridSpacingSourcePlane;
+            [x1,y1] = meshgrid((-N/2 : N/2-1) * delta1);
+        end
+		function fail = constraintAnalysis(obj)
+		modelSensitivity = 4; % see pag. 173
+        
+        L = obj.propagationDistance;
+        wvl = obj.wavelength;
+        wn = obj.waistAtObservationPlane;
+        k = obj.waveNumber;
+        D1 = obj.regionOfInterestAtSourcePlane;
+        D2 = obj.regionOfInterestAtObservationPlane;
+        r0sw = min(obj.totalFriedCoherenceRadiusByStrength);
+        
+		rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
+		
+		% Effective ROI
+		D1p = D1 + modelSensitivity*wvl*L/r0sw;
+		D2p = D2 + modelSensitivity*wvl*L/r0sw;
+		
+		figHndl = figure;
+		params = struct('figureHandle', figHndl, ...
+			'radiusOfCurvature', rad, ...
+			'effectiveSourceROI', D1p, 'effectiveObsROI', D2p);
+		
+        obj.plotConstraint2(params);
+        obj.plotConstraint1(params);
+        obj.plotConstraint3(params);
+        obj.plotCurrentValue();
+        
+        fprintf('Veryfing sampling requirements...\n');
+		fail1 = obj.checkConstraint1(params);
+		fail2 = obj.checkConstraint2(params);
+		fail3 = obj.checkConstraint3(params);
+		fail4 = obj.checkConstraint4();
+		
+		fail = (fail1 || fail2 || fail3 || fail4);
+        end
+
     end
       
     methods(Access = private)
@@ -139,8 +192,6 @@ classdef SimulationParameters<handle
                 sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
         end
         function plotConstraint1(obj, params)
-            figHndl = params.figureHandle;
-            
             L = obj.propagationDistance;
             wvl = obj.wavelength;
             D1p = params.effectiveSourceROI;
@@ -151,13 +202,11 @@ classdef SimulationParameters<handle
             [d1, dn] = meshgrid(d1, dn);
             
             deltan_max = -D2p/D1p*d1 + wvl*L/D1p;
-            plot(figHndl, d1(1,:), deltan_max(1,:), 'k--', 'Linewidth', 2);
+            plot(d1(1,:), deltan_max(1,:), 'k--', 'Linewidth', 2);
             axis([0 d1(end) 0 dn(end)]);
             set(gca, 'Color', 'none', 'Layer', 'top');
         end
         function plotConstraint2(obj, params)
-            figHndl = params.figureHandle;
-            
             L = obj.propagationDistance;
             wvl = obj.wavelength;
             D1p = params.effectiveSourceROI;
@@ -168,7 +217,7 @@ classdef SimulationParameters<handle
             [d1, dn] = meshgrid(d1, dn);
             
             N2 = log2((wvl * L + D1p*dn + D2p*d1) ./ (2 * d1 .* dn));
-            contourf(figHndl, d1, dn, N2);
+            contourf(d1, dn, N2);
             %clabel(C,hh, 'FontSize', 15, 'Rotation', 0, ...
             %    'FontWeight', 'bold');
             xlabel('\delta_1 [m]');
@@ -177,10 +226,11 @@ classdef SimulationParameters<handle
             hold all;
         end
         function plotConstraint3(obj, params)
-            figHndl = params.figureHandle;
-            
             L = obj.propagationDistance;
             wvl = obj.wavelength;
+            D1 = obj.regionOfInterestAtSourcePlane;
+            
+            rad = params.radiusOfCurvature;
             D1p = params.effectiveSourceROI;
             D2p = params.effectiveObsROI;
             
@@ -190,10 +240,96 @@ classdef SimulationParameters<handle
             
             dnmin3 = (1+L/rad)*d1 - wvl*L/D1;
             dnmax3 = (1+L/rad)*d1 + wvl*L/D1;
-            plot(figHndl, d1(1,:), dnmax3(1,:), 'k-.');
+            plot(d1(1,:), dnmax3(1,:), 'k-.');
             set(gca, 'Color', 'none', 'Layer', 'top');
             plot(d1(1,:), dnmin3(1,:), 'k-.');
             set(gca, 'Color', 'none', 'Layer', 'top');    
+        end
+        function plotCurrentValue(obj)
+            delta1 = obj.gridSpacingSourcePlane;
+            deltan = obj.gridSpacingObservationPlane;
+            plot(delta1, deltan, 'w*', 'MarkerSize', 20);
+            set(gca, 'Color', 'none', 'Layer', 'top'); 
+        end
+        function fail1 = checkConstraint1(obj,params)
+            wvl = obj.wavelength;
+            L = obj.propagationDistance;
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+            
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            fail1 = (deltan >= -D2p/D1p*delta1 + wvl*L/D1p);
+            fprintf('Constraint 1: ');
+            if ~fail1
+                fprintf('Satisfied\n');
+            else
+                fprintf('Not satisfied [deltan = %3.2e should be smaller than %3.2e]\n', ...
+                    deltan, -D2p/D1p*delta1 + wvl*L/D1p);
+            end
+        end
+        function fail2 = checkConstraint2(obj,params)
+            wvl = obj.wavelength;
+            L = obj.propagationDistance;
+            N = obj.transverseGridSize;
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+            
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            Nmin = (wvl*L + D1p*deltan + D2p*delta1)./ (2*delta1 .* deltan);
+
+            fail2 = (N <= Nmin);
+            fprintf('Constraint 2: ');
+            if ~fail2
+                fprintf('Satisfied\n');
+            else
+                fprintf('Not satisfied [N = %u should be greater than %u]\n', ...
+                    N, round(Nmin));
+            end
+        end
+        function fail3 = checkConstraint3(obj,params)
+            wvl = obj.wavelength;
+            L = obj.propagationDistance;
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+            D1 = obj.regionOfInterestAtSourcePlane;
+            
+            rad = params.radiusOfCurvature;
+            
+            success3 = (deltan > (1+L/rad)*delta1 - wvl*L/D1) & ...
+                (deltan < (1+L/rad)*delta1 + wvl*L/D1);
+
+            fail3 = ~success3;
+            fprintf('Constraint 3: ');
+            if ~fail3
+                fprintf('Satisfied\n');
+            else
+                fprintf(['Not satisfied [deltan = %3.2e should be between ', ...
+                    '%3.2e and %3.2e]\n'], deltan, ...
+                    (1+L/rad)*delta1 - wvl*L/D1, (1+L/rad)*delta1 + wvl*L/D1);
+            end
+        end
+        function fail4 = checkConstraint4(obj)
+            wvl = obj.wavelength;
+            N = obj.transverseGridSize;
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+            delta = obj.gridSpacingVector;
+            
+            zmax = min([delta1 deltan])^2 * N / wvl;
+            
+            fail4 = (max(delta) >= zmax);
+            fprintf('Constraint 4: ');
+            if ~fail4
+                fprintf('Satisfied\n');
+            else
+                fprintf(['Not satisfied [Max(delta) = %3.2e ', ...
+                    'should be smaller than %3.2e]\n'], ...
+                    max(delta), zmax);
+            end
         end
     end
         
@@ -210,57 +346,7 @@ classdef SimulationParameters<handle
             end
             fclose(fid);
         end
-        function sg = superGaussianFilter(obj)
-            [x1, y1] = obj.getMeshGridAtSourcePlane();
-            N = obj.transverseGridSize;
-            sg = exp(-(x1/(0.47*N*delta1)).^16 ... 
-                -(y1/(0.47*N*delta1)).^16);
-        end
-        function Uin = getInputField(obj)
-            [x1,y1] = obj.getMeshGridAtSourcePlane();
-            qz = obj.complexBeamParameter;
-            k = obj.waveNumber;
-            Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
-        end
-        function [x1, y1] = getMeshGridAtSourcePlane(obj)
-            N = obj.transverseGridSize;
-            delta1 = obj.gridSpacingSourcePlane;
-            [x1,y1] = meshgrid((-N/2 : N/2-1) * delta1);
-        end
-		function fail = constraintAnalysis(obj)
-		modelSensitivity = 4; % see pag. 173
-		rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
-		
-		% Effective ROI
-		D1p = D1 + modelSensitivity*wvl*L/r0sw;
-		D2p = D2 + modelSensitivity*wvl*L/r0sw;
-		
-		figHndl = figure;
-		params = struct('figureHandle', figHndl, ...
-			'radiusOfCurvature', rad, ...
-			'effectiveSourceROI', D1p, 'effectiveObsROI', D2p);
-		
-        obj.plotConstraint2(params);
-        obj.plotConstraint1(params);
-        obj.plotConstraint3(params);
         
-		fail2 = checkConstraint2(params);
-		fail1 = obj.checkConstraint1(params);
-		fail3 = checkConstraint3(params);
-		fail4 = checkConstraint4(params);
-		
-		fail = (fail1 || fail2 || fail3 || fail4);
-        end
-        function fail1 = checkConstraint1(obj,params)
-            wvl = obj.wavelength;
-            deltan = obj.gridSpacingObservationPlane;
-            delta1 = obj.gridSpacingSourcePlane;
-            
-            D1p = params.effectiveSourceROI;
-            D2p = params.effectiveObsROI;
-            
-            fail1 = (deltan < -D2p/D1p*delta1 + wvl*L/D1p);
-        end
     end
 end
 

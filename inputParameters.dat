@@ -1,5 +1,5 @@
 # Geometry
-propagationDistance: 3000
+propagationDistance: 0.89
 numberOfPhasePlanes: 10
 turbulenceRegionStartPosition:
 turbulenceRegionEndPosition:
