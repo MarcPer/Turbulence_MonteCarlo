@@ -7,9 +7,9 @@ if (nargin == 1)
 end
 
 %% CHECK parameter names!!
-r0 = params.friedCoherenceRadiusVector;
+r0 = params.friedCoherenceRadiusMatrix;
 N = params.transverseGridSize;
-delta = params.delta;
+delta = params.gridSpacingVector;
 nPlanes = params.numberOfPhasePlanes;
 %%
 phz = zeros(N,N,nPlanes);

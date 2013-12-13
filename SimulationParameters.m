@@ -138,6 +138,63 @@ classdef SimulationParameters<handle
             obj.totalFriedCoherenceRadiusByStrength = ...
                 sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
         end
+        function plotConstraint1(obj, params)
+            figHndl = params.figureHandle;
+            
+            L = obj.propagationDistance;
+            wvl = obj.wavelength;
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            d1 = linspace(0, 1.1*wvl*L/D2p, 100);
+            dn = linspace(0, 1.1*wvl*L/D1p, 100);
+            [d1, dn] = meshgrid(d1, dn);
+            
+            deltan_max = -D2p/D1p*d1 + wvl*L/D1p;
+            plot(figHndl, d1(1,:), deltan_max(1,:), 'k--', 'Linewidth', 2);
+            axis([0 d1(end) 0 dn(end)]);
+            set(gca, 'Color', 'none', 'Layer', 'top');
+        end
+        function plotConstraint2(obj, params)
+            figHndl = params.figureHandle;
+            
+            L = obj.propagationDistance;
+            wvl = obj.wavelength;
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            d1 = linspace(0, 1.1*wvl*L/D2p, 100);
+            dn = linspace(0, 1.1*wvl*L/D1p, 100);
+            [d1, dn] = meshgrid(d1, dn);
+            
+            N2 = log2((wvl * L + D1p*dn + D2p*d1) ./ (2 * d1 .* dn));
+            contourf(figHndl, d1, dn, N2);
+            %clabel(C,hh, 'FontSize', 15, 'Rotation', 0, ...
+            %    'FontWeight', 'bold');
+            xlabel('\delta_1 [m]');
+            ylabel('\delta_n [m]');
+            colorbar;
+            hold all;
+        end
+        function plotConstraint3(obj, params)
+            figHndl = params.figureHandle;
+            
+            L = obj.propagationDistance;
+            wvl = obj.wavelength;
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            d1 = linspace(0, 1.1*wvl*L/D2p, 100);
+            dn = linspace(0, 1.1*wvl*L/D1p, 100);
+            [d1, ~] = meshgrid(d1, dn);
+            
+            dnmin3 = (1+L/rad)*d1 - wvl*L/D1;
+            dnmax3 = (1+L/rad)*d1 + wvl*L/D1;
+            plot(figHndl, d1(1,:), dnmax3(1,:), 'k-.');
+            set(gca, 'Color', 'none', 'Layer', 'top');
+            plot(d1(1,:), dnmin3(1,:), 'k-.');
+            set(gca, 'Color', 'none', 'Layer', 'top');    
+        end
     end
         
     methods(Static)
@@ -169,6 +226,40 @@ classdef SimulationParameters<handle
             N = obj.transverseGridSize;
             delta1 = obj.gridSpacingSourcePlane;
             [x1,y1] = meshgrid((-N/2 : N/2-1) * delta1);
+        end
+		function fail = constraintAnalysis(obj)
+		modelSensitivity = 4; % see pag. 173
+		rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
+		
+		% Effective ROI
+		D1p = D1 + modelSensitivity*wvl*L/r0sw;
+		D2p = D2 + modelSensitivity*wvl*L/r0sw;
+		
+		figHndl = figure;
+		params = struct('figureHandle', figHndl, ...
+			'radiusOfCurvature', rad, ...
+			'effectiveSourceROI', D1p, 'effectiveObsROI', D2p);
+		
+        obj.plotConstraint2(params);
+        obj.plotConstraint1(params);
+        obj.plotConstraint3(params);
+        
+		fail2 = checkConstraint2(params);
+		fail1 = obj.checkConstraint1(params);
+		fail3 = checkConstraint3(params);
+		fail4 = checkConstraint4(params);
+		
+		fail = (fail1 || fail2 || fail3 || fail4);
+        end
+        function fail1 = checkConstraint1(obj,params)
+            wvl = obj.wavelength;
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+            
+            D1p = params.effectiveSourceROI;
+            D2p = params.effectiveObsROI;
+            
+            fail1 = (deltan < -D2p/D1p*delta1 + wvl*L/D1p);
         end
     end
 end
