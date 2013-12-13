@@ -11,27 +11,7 @@ close all; clear all;
 %
 % <LENGTH UNITS: m>
 
-% Set running folder
-user_folder = userpath;
-user_folder(end) = [];
-codeFolder = cd(user_folder);
-cd ../..
-user_folder = fullfile(pwd, 'Dropbox');
-cd(codeFolder);
-
-% Import additional functions
-fun_folder = fullfile(user_folder, 'MATLAB', ...
-    'Numerical simulation of optical wave propagation');
-addpath(fun_folder);
-fun_folder = fullfile(user_folder, 'MATLAB', 'LuckyImaging');
-addpath(fun_folder);
-fun_folder = fullfile(user_folder, 'MATLAB', 'Downloaded', 'dlmcell');
-addpath(fun_folder);
-fun_folder = fullfile(user_folder, 'MATLAB', 'Downloaded', 'waitinput');
-addpath(fun_folder);
-fun_folder = fullfile(user_folder, 'MATLAB');
-addpath(fun_folder);
-clear fun_folder;
+inOut = IOPaths;   % Imports functions and defines methods for export paths
 
 % Ask user to choose simulation type
 Phase_screen_choose_simulation;
