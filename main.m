@@ -23,42 +23,13 @@ Phase_screen_shutdown_input;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
-Phase_screen_params;
-params_flag = 1;
+simParams = SimulationParameters;
+constraintReturnCode = simParams.constraintAnalysis;
 
-% Check sampling constraints
-Phase_screen_constraint_analysis
-
-abort = 0;
-reply = 'k';
-if constr_err
-    while ~sum(strcmpi(reply, {'y', 'n', ''})) 
-        reply = input('Abort simulation? Y/N [Y]: ', 's');
-    end
-    if isempty(reply)
-        reply = 'Y';
-    end
-    if sum(strcmpi(reply,{'y', 'Y'}))
-        abort = 1;
-    end
+isAbort = userInput.abortWhenConstraintFail(constraintReturnCode, shut);
+if isAbort
+    return
 end
-
-if ~abort
-    fprintf('Press any key to continue...\n');
-    pause;
-end
-
-if abort
-    if shut == 1
-        fprintf('Shutdown aborted.\n');
-    end
-    if shut == 2
-        fprintf('Hibernation aborted.\n');
-    end
-    shut = 0;
-end
-
-close(hndl);
 
 % Initialize variables
 Phase_screen_init;
