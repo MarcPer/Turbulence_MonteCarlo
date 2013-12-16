@@ -11,6 +11,8 @@ r0 = params.friedCoherenceRadiusMatrix;
 N = params.transverseGridSize;
 delta = params.gridSpacingVector;
 nPlanes = params.numberOfPhasePlanes;
+L0 = params.outerScale;
+l0 = params.innerScale;
 %%
 phz = zeros(N,N,nPlanes);
 

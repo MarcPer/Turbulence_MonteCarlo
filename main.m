@@ -23,7 +23,7 @@ Phase_screen_shutdown_input;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
-simParams = SimulationParameters;
+simParams = SimulationParameters('FourthOrder', true);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = userInput.abortWhenConstraintFail(constraintReturnCode, shut);
@@ -34,8 +34,9 @@ end
 % Initialize variables
 Phase_screen_init;
 
-params_flag = 0;        % Unflag Phase_screen_params.m script
 %% RUN SIMULATION
+intensityProfileForEachTurbStrength = ...
+    TurbulenceSimulator.getIntensityForEachTurbStrength(simParams);
 % Loop over turbulence strengths
 for idxStrength = 1 : leng
     % Check for cancel button press

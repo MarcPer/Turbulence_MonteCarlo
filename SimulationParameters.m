@@ -47,11 +47,11 @@ classdef SimulationParameters<handle
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
         end
-        function sg = superGaussianFilter(obj)
+        function sg = getSuperGaussianFilter(obj)
             [x1, y1] = obj.getMeshGridAtSourcePlane();
-            N = obj.transverseGridSize;
-            sg = exp(-(x1/(0.47*N*delta1)).^16 ... 
-                -(y1/(0.47*N*delta1)).^16);
+            [NxEff, NyEff] = obj.getEffectiveGridSize;
+            sg = exp(-(x1/(0.47*NxEff*delta1)).^16 ... 
+                -(y1/(0.47*NyEff*delta1)).^16);
         end
         function Uin = getInputField(obj)
             [x1,y1] = obj.getMeshGridAtSourcePlane();
@@ -59,10 +59,29 @@ classdef SimulationParameters<handle
             k = obj.waveNumber;
             Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
         end
+        function [NxEff, NyEff] = getEffectiveGridSize(obj)
+            [Nx, Ny] = obj.getTransverseGridSize;
+            r0sw = obj.totalFriedCoherenceRadiusByStrength;
+            r0sw(isinf(r0sw)) = 0;
+            maxSep = max(obj.transverseSeparationInR0Units);
+            extraGridLength = maxSep * r0sw/ min(obj.gridSpacingVector);
+            
+            NxEff = Nx + extraGridLength;
+            NyEff = Ny; % Transverse separation only in x direction for now.
+            
+            % Get smaller power of 2 numbers that exceeds NxEff and NyEff
+            NxEff = 2.^(ceil(log2(NxEff)));
+            NyEff = 2.^(ceil(log2(NyEff)));            
+        end
+        function [Nx, Ny] = getTransverseGridSize(obj)
+            Nx = obj.transverseGridSize;
+            Ny = obj.transverseGridSize;
+        end
         function [x1, y1] = getMeshGridAtSourcePlane(obj)
-            N = obj.transverseGridSize;
+            [NxEff, NyEff] = obj.getEffectiveGridSize;
             delta1 = obj.gridSpacingSourcePlane;
-            [x1,y1] = meshgrid((-N/2 : N/2-1) * delta1);
+            [x1,y1] = meshgrid((-NxEff/2 : NxEff/2-1) * delta1, ...
+                (-NyEff/2 : NyEff/2-1) * delta1);
         end
 		function fail = constraintAnalysis(obj)
 		modelSensitivity = 4; % see pag. 173
@@ -272,7 +291,8 @@ classdef SimulationParameters<handle
         function fail2 = checkConstraint2(obj,params)
             wvl = obj.wavelength;
             L = obj.propagationDistance;
-            N = obj.transverseGridSize;
+            [Nx, ~] = obj.getEffectiveGridSize;
+            N = min(Nx);
             deltan = obj.gridSpacingObservationPlane;
             delta1 = obj.gridSpacingSourcePlane;
             
@@ -314,7 +334,8 @@ classdef SimulationParameters<handle
         end
         function fail4 = checkConstraint4(obj)
             wvl = obj.wavelength;
-            N = obj.transverseGridSize;
+            [Nx, ~] = obj.getEffectiveGridSize;
+            N = min(Nx);
             deltan = obj.gridSpacingObservationPlane;
             delta1 = obj.gridSpacingSourcePlane;
             delta = obj.gridSpacingVector;
@@ -335,7 +356,9 @@ classdef SimulationParameters<handle
         
     methods(Static)
         function fData = openParametersFile()
-            fid = fopen('inputParameters.dat');
+            fileName = 'inputParameters.dat';
+            fileName = uigetfile(fileName);
+            fid = fopen(fileName);
             try
                 fData = fread(fid, inf, '*char');
                 fData = fData';

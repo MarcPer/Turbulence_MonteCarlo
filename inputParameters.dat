@@ -15,4 +15,4 @@ numberOfRealizations: 500
 transverseGridSize: 512
 gridSpacingSourcePlane: 5.5e-5
 gridSpacingObservationPlane: 7e-6
-transverseSeparationInR0Units;
+transverseSeparationInR0Units: 0, 0.5
