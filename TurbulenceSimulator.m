@@ -2,6 +2,7 @@ classdef TurbulenceSimulator<handle
    properties (Access = private)
        simulationParameters;
        numberOfTransverseSeparations;
+       phaseScreenProfiles;
    end
    
    methods
@@ -22,39 +23,37 @@ classdef TurbulenceSimulator<handle
            [~,~, outputField] = ang_spec_multi_prop(Uin, wvl, ...
             delta1, deltan, z, sg.*exp(1i*phScreen));
        end
-       function intSep = getFieldForEachTransverseSeparation(obj, phz)
+       function intSep = getFieldForEachTransverseSeparation(obj)
            nSep = obj.numberOfTransverseSeparations;
            [Nx, Ny] = obj.simulationParameters.getEffectiveGridSize;
            intSep = zeros(Ny, Nx, nSep);
            
        end
-       function IavgRe = getAverageOverRealizations(obj, idxStrength)
+       function IavgRe = getAverageOverRealizations(obj)
            nRe = obj.simulationParameters.numberOfRealizations;
            nSep = obj.numberOfTransverseSeparations;
            [Nx, Ny] = obj.simulationParameters.getEffectiveGridSize;
            IavgRe = zeros(Ny, Nx, nSep);
            
            for iRe = 1 : nRe
-               phz = generateScreen(obj.simulationParameters, idxStrength);
+               obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
                outputField =  ...
-                   obj.getFieldForEachTransverseSeparation(phz);
+                   obj.getFieldForEachTransverseSeparation();
                intensitySingleRealization = outputField.^2;
                IavgRe = IavgRe + intensitySingleRealization;
            end
            IavgRe = IavgRe/nRe;
            
        end
-       function intStrength = getIntensityForEachTurbStrength(obj)
+       function intGamma = getIntensityForEachGamma(obj)
            nGamma = length(obj.simulationParameters.gammaStrength);
-           nSep = obj.numberOfTransverseSeparations;
-           [Nx, Ny] = obj.simulationParameters.getEffectiveGridSize;
-           intStrength = zeros(Ny, Nx, nSep, nGamma);
+           intGamma = cell(nGamma);
            
            for iGamma = 1 : nGamma
-               intStrength(:,:,:,iGamma) = ...
-                   obj.getAverageOverRealizations(iGamma);
+               obj.simulationParameters.gammaIndex = iGamma;
+               intGamma{iGamma} = obj.getAverageOverRealizations();
            end
        end
-       
+       % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
    end
 end

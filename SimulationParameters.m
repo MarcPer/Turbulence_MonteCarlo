@@ -11,6 +11,7 @@ classdef SimulationParameters<handle
 		turbulenceRegionEndPosition;
         % Turbulence Statistics
         gammaStrength;
+        gammaIndex;
         outerScale;
         innerScale;
         % Beam
@@ -41,6 +42,7 @@ classdef SimulationParameters<handle
        
     methods(Access = public)
         function simParams = SimulationParameters(varargin)
+           simParams.gammaIndex = 1;
            simParams.checkIfFourthOrder(varargin);
            fData = simParams.openParametersFile();
            simParams.readParameters(fData);
@@ -63,6 +65,7 @@ classdef SimulationParameters<handle
             [Nx, Ny] = obj.getTransverseGridSize;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
+            r0sw = r0sw(obj.gammaIndex);
             maxSep = max(obj.transverseSeparationInR0Units);
             extraGridLength = maxSep * r0sw/ min(obj.gridSpacingVector);
             
