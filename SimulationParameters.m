@@ -50,10 +50,11 @@ classdef SimulationParameters<handle
            simParams.computeDerivedQuantities();
         end
         function sg = getSuperGaussianFilter(obj)
+            delta1 = obj.gridSpacingSourcePlane;
             [x1, y1] = obj.getMeshGridAtSourcePlane();
-            [NxEff, NyEff] = obj.getEffectiveGridSize;
-            sg = exp(-(x1/(0.47*NxEff*delta1)).^16 ... 
-                -(y1/(0.47*NyEff*delta1)).^16);
+            [Nx, Ny] = obj.getTransverseGridSize;
+            sg = exp(-(x1/(0.47*Nx*delta1)).^16 ... 
+                -(y1/(0.47*Ny*delta1)).^16);
         end
         function Uin = getInputField(obj)
             [x1,y1] = obj.getMeshGridAtSourcePlane();
@@ -61,7 +62,7 @@ classdef SimulationParameters<handle
             k = obj.waveNumber;
             Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
         end
-        function [NxEff, NyEff] = getEffectiveGridSize(obj)
+        function [NxEff, NyEff] = getPhaseScreenGridSize(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
@@ -76,32 +77,45 @@ classdef SimulationParameters<handle
             NxEff = 2.^(ceil(log2(NxEff)));
             NyEff = 2.^(ceil(log2(NyEff)));            
         end
+        function [D1p, D2p] = getEffectiveROI(obj)
+            modelSensitivity = 4; % see pag. 173
+            
+            L = obj.propagationDistance;
+            wvl = obj.wavelength;
+            r0sw = obj.totalFriedCoherenceRadiusByStrength;
+            r0sw(isinf(r0sw)) = NaN;
+            
+            D1 = obj.regionOfInterestAtSourcePlane;
+            D2 = obj.regionOfInterestAtObservationPlane + ...
+                max(obj.transverseSeparationInR0Units) * r0sw;
+            D1p = max(D1 + modelSensitivity*wvl*L ./ r0sw);
+            D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
+        end
+        function [deltaX, deltaY] = getTransverSeparationInPixels(obj, sepIndex)
+            r0sw = obj.totalFriedCoherenceRadiusByStrength;
+            r0sw(isinf(r0sw)) = 0;
+            r0sw = r0sw(obj.gammaIndex);
+            sep = obj.transverseSeparationInR0Units(sepIndex);
+            deltaX = round(sep * r0sw ./ obj.gridSpacingVector); 
+            deltaY = round(sep * r0sw ./ obj.gridSpacingVector);
+        end
         function [Nx, Ny] = getTransverseGridSize(obj)
             Nx = obj.transverseGridSize;
             Ny = obj.transverseGridSize;
         end
         function [x1, y1] = getMeshGridAtSourcePlane(obj)
-            [NxEff, NyEff] = obj.getEffectiveGridSize;
+            [Nx, Ny] = obj.getTransverseGridSize;
             delta1 = obj.gridSpacingSourcePlane;
-            [x1,y1] = meshgrid((-NxEff/2 : NxEff/2-1) * delta1, ...
-                (-NyEff/2 : NyEff/2-1) * delta1);
+            [x1,y1] = meshgrid((-Nx/2 : Nx/2-1) * delta1, ...
+                (-Ny/2 : Ny/2-1) * delta1);
         end
 		function fail = constraintAnalysis(obj)
-		modelSensitivity = 4; % see pag. 173
-        
         L = obj.propagationDistance;
-        wvl = obj.wavelength;
         wn = obj.waistAtObservationPlane;
         k = obj.waveNumber;
-        D1 = obj.regionOfInterestAtSourcePlane;
-        D2 = obj.regionOfInterestAtObservationPlane;
-        r0sw = min(obj.totalFriedCoherenceRadiusByStrength);
+        [D1p, D2p] = obj.getEffectiveROI;
         
 		rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
-		
-		% Effective ROI
-		D1p = D1 + modelSensitivity*wvl*L/r0sw;
-		D2p = D2 + modelSensitivity*wvl*L/r0sw;
 		
 		figHndl = figure;
 		params = struct('figureHandle', figHndl, ...
@@ -294,7 +308,7 @@ classdef SimulationParameters<handle
         function fail2 = checkConstraint2(obj,params)
             wvl = obj.wavelength;
             L = obj.propagationDistance;
-            [Nx, ~] = obj.getEffectiveGridSize;
+            [Nx, ~] = obj.getPhaseScreenGridSize;
             N = min(Nx);
             deltan = obj.gridSpacingObservationPlane;
             delta1 = obj.gridSpacingSourcePlane;
@@ -337,7 +351,7 @@ classdef SimulationParameters<handle
         end
         function fail4 = checkConstraint4(obj)
             wvl = obj.wavelength;
-            [Nx, ~] = obj.getEffectiveGridSize;
+            [Nx, ~] = obj.getPhaseScreenGridSize;
             N = min(Nx);
             deltan = obj.gridSpacingObservationPlane;
             delta1 = obj.gridSpacingSourcePlane;

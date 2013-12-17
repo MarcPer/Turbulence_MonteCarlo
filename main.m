@@ -1,7 +1,6 @@
 %% Clear and close all
 close all; clear all;
-
-%% INITIALIZATION CELL
+%
 % This script simulates the effect of turbulence by modelling it as a
 % series of phase screens. Technical details are taken from
 %
@@ -12,13 +11,14 @@ close all; clear all;
 % <LENGTH UNITS: m>
 
 inOut = IOPaths;   % Imports functions and defines methods for export paths
+usrIn = UserInput;
 
 % Ask user to choose simulation type
 Phase_screen_choose_simulation;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-shut = 2;
+shut = 0;
 Phase_screen_shutdown_input;
 
 %% SETUP AND SIMULATION PARAMETERS
@@ -26,56 +26,16 @@ Phase_screen_shutdown_input;
 simParams = SimulationParameters('FourthOrder', true);
 constraintReturnCode = simParams.constraintAnalysis;
 
-isAbort = userInput.abortWhenConstraintFail(constraintReturnCode, shut);
+isAbort = UserInput.abortWhenConstraintFail(constraintReturnCode, shut);
 if isAbort
     return
 end
 
-% Initialize variables
-Phase_screen_init;
+turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
 intensityProfileForEachTurbStrength = ...
-    TurbulenceSimulator.getIntensityForEachTurbStrength(simParams);
-% Loop over turbulence strengths
-for idxStrength = 1 : leng
-    % Check for cancel button press
-    if abort
-        break
-    end
-        
-    fprintf('Turbulence strength: %u of %u\n', idxStrength, leng);
-    h = waitbar(0, '0%', 'Name', 'Simulating turbulence...', ...
-         'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
-    setappdata(h,'canceling',0);
-    % Loop over realizations
-    for idxreal = 1 : nreals
-        phz = generateScreen(simParams, idxStrength);
-    
-        % Simulate turbulent propagation
-        [xn yn Uout_real] = ang_spec_multi_prop(Uin, wvl, ...
-            delta1, deltan, z, sg.*exp(1i*phz));
-        
-        % Derive intensity pattern
-        Iout_real = abs(Uout_real).^2;
-        Iout_real = Iout_real/sum(Iout_real(:));
-        
-        % Incoherent sum of patterns from different realizations
-        Iout(:,:,idxStrength) = Iout(:,:,idxStrength) + Iout_real;
-        
-        % Check for cancel button press
-        if getappdata(h,'canceling')
-            abort = 1;
-            break
-        end
-        
-        waitbar(idxreal/nreals, h, sprintf('%3.1f%%',idxreal/nreals*100));
-       
-    end
-    % Output intensity for given gamma
-    Iout(:,:,idxStrength) = Iout(:,:,idxStrength)/nreals;
-    delete(h);
-end
+    turbSimulator.getIntensityForEachGamma();
 
 %% PLOT RESULTS (if computation was not aborted)
 
