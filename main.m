@@ -14,19 +14,18 @@ inOut = IOPaths;   % Imports functions and defines methods for export paths
 usrIn = UserInput;
 
 % Ask user to choose simulation type
-Phase_screen_choose_simulation;
+usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-shut = 0;
-Phase_screen_shutdown_input;
+usrIn.enumShutdown = 1;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters('FourthOrder', true);
 constraintReturnCode = simParams.constraintAnalysis;
 
-isAbort = UserInput.abortWhenConstraintFail(constraintReturnCode, shut);
+isAbort = UserInput.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
 if isAbort
     return
 end
@@ -143,8 +142,8 @@ end
 %% SHUTDOWN COMPUTER?
 wtime = 90;         % Time limit to abort shutdown
 
-if shut
-    if shut == 1
+if usrIn.enumShutdown
+    if usrIn.enumShutdown == 1
         shut_mode = 'shutdown';
         shut_cmd = 'shutdown /s';
     else
@@ -156,7 +155,7 @@ if shut
     tic;
     reply_shut = 'k';
     while (~sum(strcmpi(reply_shut, {'y', 'n', ''})) && toc < wtime)
-        if shut == 1
+        if usrIn.enumShutdown == 1
         reply_shut = waitinput('Proceed with shutdown? Y/N [Y]:    ', ...
             wtime, 's');
         else
@@ -169,18 +168,18 @@ if shut
         reply_shut = 'Y';
     end
     if strcmpi(reply_shut,'y')
-        if shut == 1
+        if usrIn.enumShutdown == 1
             fprintf('\nShutting down.\n');
         else
             fprintf('\nHibernating.\n');
         end
         pause(3);
-        shut = 0;
+        usrIn.enumShutdown = 0;
         system(shut_cmd);
     end
-    if shut == 1
+    if usrIn.enumShutdown == 1
         fprintf('Shutdown aborted.\n');
-    elseif shut == 2
+    elseif usrIn.enumShutdown == 2
         fprintf('Hibernation aborted.\n');
     end
 end
