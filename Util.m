@@ -119,5 +119,68 @@ classdef Util<handle
                 centerIndex(2) - floor(width/2) : ...
                 centerIndex(2) - floor(width/2) + width - 1, :);
         end
+        function pwrSlit = computePowerThroughSlit(intProfile, slitWidth, isFourthOrder)
+            if isFourthOrder
+                pwrSlit = coincidenceSlitIntegrate(intProfile, slitWidth);
+            else
+                pwrSlit = intensitySlitIntegrate(intProfile, slitWidth);
+            end
+        end
+        function coincSlit = coincidenceSlitIntegrate(intProfile, slitWidth)
+            %CoincSlitIntegrate Integrates array over effective slit that is the
+            %   convolution of a slit of width 'a' with itself.
+            %
+            %   SYNTAX:
+            %   y = CoincSlitIntegrate(A,a);
+            %
+            %   y = CoincSlitIntegrate(A,a) returns the result of an integration of
+            %   matrix 'A' over the effective slit that is given by the convolution of
+            %   a rectangular slit of width 'a' with itself. The resulting amplitude
+            %   apperture takes the form of a triangle of width '2a' and height 1 in
+            %   the horizontal direction.
+            %
+            %   The slit is automatically horizontally displaced so that its horizontal
+            %   maximum coincides with the maximum element of 'A'.
+            %
+            %   This function is recurrent in coincidence signals integrated over a
+            %   slit of width 'a'.
+            
+            if ~iscell(intProfile)
+                intProfile = {intProfile};
+            end
+            numCells = length(intProfile);
+            hght = zeros(numCells, 1);
+            wdth = zeros(numCells, 1);
+            x0 = zeros(numCells, 1);
+            y0 = zeros(numCells, 1);
+            
+            for iCell = 1 : numCells
+                [hght(iCell), wdth(iCell)] = size(intProfile{iCell});
+                [y0(i), x0(i)] = find( intProfile{i} == max(max(intProfile{i})));
+            end
+            x0 = x0(1);
+            y0 = y0(1);
+            
+            cslit = triang(2*slitWidth -1)';
+            lenSlit = length(cslit);
+            
+            % Adjust the slit function to be of the same size as matrix 'A'
+            if (lenSlit > wdth)
+                lenDiff = lenSlit - wdth;
+                cslit([1:floor(lenDiff/2), lenSlit-floor(lenDiff/2)+1:end]) = [];
+            else
+                lenDiff = wdth - lenSlit;
+                cslit = [zeros(1, floor(lenDiff/2)), cslit, ...
+                    zeros(1, ceil(lenDiff/2))];
+            end
+            
+            % Center slit function horizontally on maximum element of 'A'
+            [~, xSlit] = max(cslit);
+            cslit = Displace(cslit, x0 - xSlit, 0);
+            
+            cslit = repmat(cslit, hght, 1);
+            coincSlit = sum( sum( cslit .* intProfile ));
+        
+        end
     end
 end

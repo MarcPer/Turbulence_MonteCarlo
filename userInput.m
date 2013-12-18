@@ -84,6 +84,7 @@ classdef UserInput<handle
                 shutMode = 'HIBERNATION';
             end
             
+            choiceShut = '';
             if value
                 prompt = sprintf('Computer is scheduled for %s. Press CANCEL to unschedule.\n', shutMode);
                 choiceShut = questdlg(prompt, 'Confirm Shutdown/Hibernation', ...

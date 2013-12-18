@@ -3,8 +3,11 @@ classdef TurbulenceSimulator<handle
         simulationParameters;
         numberOfTransverseSeparations;
         phaseScreenProfiles;
-        isAborted;
         abortButtonHandle;
+    end
+    
+    properties (SetAccess = private, GetAccess = public)
+        isAborted; 
     end
     
     methods
@@ -73,7 +76,7 @@ classdef TurbulenceSimulator<handle
                 rethrow(exception);
             end
         end
-        function intGamma = getIntensityForEachGamma(obj)
+        function [intGamma, plotInfo] = getIntensityForEachGamma(obj)
             nGamma = length(obj.simulationParameters.gammaStrength);
             intGamma = cell(nGamma);
             
@@ -86,6 +89,12 @@ classdef TurbulenceSimulator<handle
                 obj.simulationParameters.gammaIndex = iGamma;
                 intGamma{iGamma} = obj.getAverageOverRealizations();
             end
+            
+            tit = 'Intensity vs Turbulence Strength';
+            labelX = '\gamma';
+            labelY = 'intensity';
+            plotInfo = struct('title', tit, ...
+                'labelX', labelX, 'labelY', labelY);
         end
         % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
     end

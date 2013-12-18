@@ -18,23 +18,33 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 1;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters('FourthOrder', true);
 constraintReturnCode = simParams.constraintAnalysis;
 
-isAbort = UserInput.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
+isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
 if isAbort
     return
 end
+close all; clear isAbort;
 
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-intensityProfileForEachTurbStrength = ...
+[intProfileGamma, plotInfo] = ...
     turbSimulator.getIntensityForEachGamma();
+
+if turbSimulator.isAborted
+    fprintf('Simulation aborted.');
+    return;
+end
+
+%% COMPUTE RELEVANT VALUES
+slitWidth = 50e-6;
+pwrSlit = Util.computePowerThroughSlit(intProfileGamma, slitWidth);
 
 %% PLOT RESULTS (if computation was not aborted)
 
