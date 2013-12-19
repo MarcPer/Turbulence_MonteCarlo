@@ -1,4 +1,7 @@
 classdef TurbulenceSimulator<handle
+    % Takes phase screens and input field and propagates the latter.
+    % Includes a method to average over many realizations and perform
+    % various operations on the screens (e.g. inversion and displacement)
     properties (Access = private)
         simulationParameters;
         numberOfTransverseSeparations;
@@ -76,9 +79,9 @@ classdef TurbulenceSimulator<handle
                 rethrow(exception);
             end
         end
-        function [intGamma, plotInfo] = getIntensityForEachGamma(obj)
+        function intGamma = getIntensityForEachGamma(obj)
             nGamma = length(obj.simulationParameters.gammaStrength);
-            intGamma = cell(nGamma);
+            intGamma = cell(nGamma, 1);
             
             for iGamma = 1 : nGamma
                 if obj.isAborted
@@ -86,15 +89,9 @@ classdef TurbulenceSimulator<handle
                 end
                 UserInput.printOutProgress('Turbulence strength', ...
                     iGamma, nGamma);
-                obj.simulationParameters.gammaIndex = iGamma;
+                obj.simulationParameters.gammaCurrentIndex = iGamma;
                 intGamma{iGamma} = obj.getAverageOverRealizations();
             end
-            
-            tit = 'Intensity vs Turbulence Strength';
-            labelX = '\gamma';
-            labelY = 'intensity';
-            plotInfo = struct('title', tit, ...
-                'labelX', labelX, 'labelY', labelY);
         end
         % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
     end

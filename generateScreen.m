@@ -8,7 +8,7 @@ delta = params.gridSpacingVector;
 nPlanes = params.numberOfPhasePlanes;
 L0 = params.outerScale;
 l0 = params.innerScale;
-gammaIndex = params.gammaIndex;
+gammaIndex = params.gammaCurrentIndex;
 
 N = NxEff;      % Temporary, before non-square grid is implemented
 NyEff = NxEff;  % Temporary, before non-square grid is implemented

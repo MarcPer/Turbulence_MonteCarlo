@@ -9,9 +9,10 @@ classdef SimulationParameters<handle
         numberOfPhasePlanes;
 		turbulenceRegionStartPosition;
 		turbulenceRegionEndPosition;
+        slitWidth;
         % Turbulence Statistics
         gammaStrength;
-        gammaIndex;
+        gammaCurrentIndex;
         outerScale;
         innerScale;
         % Beam
@@ -42,7 +43,7 @@ classdef SimulationParameters<handle
        
     methods(Access = public)
         function simParams = SimulationParameters(varargin)
-           simParams.gammaIndex = 1;
+           simParams.gammaCurrentIndex = 1;
            simParams.checkIfFourthOrder(varargin);
            fData = simParams.openParametersFile();
            simParams.readParameters(fData);
@@ -66,7 +67,7 @@ classdef SimulationParameters<handle
             [Nx, Ny] = obj.getTransverseGridSize;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
-            r0sw = r0sw(obj.gammaIndex);
+            r0sw = r0sw(obj.gammaCurrentIndex);
             maxSep = max(obj.transverseSeparationInR0Units);
             extraGridLength = maxSep * r0sw/ min(obj.gridSpacingVector);
             
@@ -94,7 +95,7 @@ classdef SimulationParameters<handle
         function [deltaX, deltaY] = getTransverSeparationInPixels(obj, sepIndex)
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
-            r0sw = r0sw(obj.gammaIndex);
+            r0sw = r0sw(obj.gammaCurrentIndex);
             sep = obj.transverseSeparationInR0Units(sepIndex);
             deltaX = round(sep * r0sw ./ obj.gridSpacingVector); 
             deltaY = round(sep * r0sw ./ obj.gridSpacingVector);

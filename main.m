@@ -34,8 +34,7 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-[intProfileGamma, plotInfo] = ...
-    turbSimulator.getIntensityForEachGamma();
+intProfileGamma = turbSimulator.getIntensityForEachGamma();
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.');
@@ -44,42 +43,18 @@ end
 
 %% COMPUTE RELEVANT VALUES
 slitWidth = 50e-6;
-pwrSlit = Util.computePowerThroughSlit(intProfileGamma, slitWidth);
+[pwrSlit, plotInfo] = ...
+    Calculator.computePowerThroughSlit(intProfileGamma, simParams);
 
-%% PLOT RESULTS (if computation was not aborted)
+%% PLOT RESULTS
 
-if ~abort
 % Beam transverse profiles at observation plane ('measured gammas only')
-figure(1);
-set(gcf, 'Units', 'normalized', 'Position', [0.625 0.28 0.365 0.61]);
-
-for g0i = 1 : leng0
-    subplot( ceil(sqrt(leng0)), ceil(sqrt(leng0)), g0i);
-    if ~isempty(find(Iout(:, :, g0indx(g0i)),1))
-        imagesc(Iout(:, :, g0indx(g0i)));
-        axis off;
-        title(['\gamma = ', num2str(g0(g0i)*1e6), ' \mum']);
-    end
-end
-
-% Power going through slit
-if coinc
-    for idxStrength = 1 : leng
-    A = Iout(:,:,idxStrength);
-    Pslit(idxStrength) = CoincSlitIntegrate(A,a);
-    end
-else
-    for idxStrength = 1 : leng
-        A = Iout(:,:,idxStrength);
-        Pslit(idxStrength) = SlitIntegrate(A,a);
-    end
-end
+Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGamma);
 
 Pslit = Pslit/Pslit(1);
 figure(2);
 set(gcf, 'Units', 'normalized', 'Position', [2/3 0.05 1/3 1/4]);
 plot(g, Pslit, 'LineWidth', 1.5);
-end
 
 %% EXPORT RESULTS (only if simulation was completed)
 

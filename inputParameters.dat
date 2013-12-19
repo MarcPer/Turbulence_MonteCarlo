@@ -3,6 +3,7 @@ propagationDistance: 0.89
 numberOfPhasePlanes: 10
 turbulenceRegionStartPosition:
 turbulenceRegionEndPosition:
+slitWidth: 50e-6
 # Turbulence Statistics
 gammaStrength: 0, 4.29e-6
 #, 7.99e-6, 12.1e-6, 16.6e-6, 21.3e-6, 27.9e-6
@@ -16,4 +17,4 @@ numberOfRealizations: 1
 transverseGridSize: 1024
 gridSpacingSourcePlane: 5.5e-5
 gridSpacingObservationPlane: 7e-6
-transverseSeparationInR0Units: 0, 0.1
+transverseSeparationInR0Units: 0
