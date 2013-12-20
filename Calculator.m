@@ -20,9 +20,9 @@ classdef Calculator
                 simParams.gridSpacingObservationPlane);
             
             if simParams.isFourthOrder
-                pwrSlit = coincidenceSlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
             else
-                pwrSlit = intensitySlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit = Calculator.intensitySlitIntegratePx(intProfile, slitWidthPx);
             end
             
             tit = 'Intensity vs Turbulence Strength';
@@ -34,7 +34,7 @@ classdef Calculator
         end
     end
     
-    methods(Access = private)
+    methods(Static, Access = private)
         function coincSlitPwr = coincidenceSlitIntegratePx(intProfile, slitWidth)
             %CoincSlitIntegratePx Integrates array over effective slit that is the
             %   convolution of a slit of width 'a' (in pixels) with itself.
@@ -57,17 +57,15 @@ classdef Calculator
             if ~iscell(intProfile)
                 intProfile = {intProfile};
             end
+            
             numCells = length(intProfile);
-            hght = zeros(numCells, 1);
-            wdth = zeros(numCells, 1);
-            numSeps = zeros(numCells, 1);
+            [hght, wdth, numSeps] = getSize(intProfile);
+            [rowMax, colMax] = getIndexForMaxima(intProfile);
             
             maxColumn = zeros(numCells, numSeps);
             coincSlitPwr = zeros(numCells, numSeps);
             
             for iCell = 1 : numCells
-                [hght(iCell), wdth(iCell), numSeps(iCell)] = ...
-                    size(intProfile{iCell});
                 [~, maxColumn(iCell)] = max( max(intProfile{iCell}, [], 1) );
                 
                 cSlit = triang(2*slitWidth -1)';
@@ -140,6 +138,24 @@ classdef Calculator
             end
             
         end 
+        function [hght, wdth, numSep] = getSize(A)
+            if ~iscell(A)
+                A = {A};
+            end
+            numCells = length(A); 
+            
+            hght = zeros(numCells, 1);
+            wdth = zeros(numCells, 1);
+            numSep = zeros(numCells, 1);
+            
+            for iCell = 1 : numCells
+                [hght(iCell), wdth(iCell), A(iCell)] = ...
+                    size(A{iCell});
+            end
+        end
+        function [rowMax, colMax] = getIndexForMaxima(A)
+           % IMPLEMENT ME 
+        end
     end
 end
 

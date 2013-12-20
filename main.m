@@ -34,7 +34,7 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-intProfileGamma = turbSimulator.getIntensityForEachGamma();
+intProfileGamma = turbSimulator.getIntensityForEachGamma('Normalized', true);
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.');

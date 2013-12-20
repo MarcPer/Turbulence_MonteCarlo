@@ -119,5 +119,20 @@ classdef Util<handle
                 centerIndex(2) - floor(width/2) : ...
                 centerIndex(2) - floor(width/2) + width - 1, :);
         end
+        function str = transformInputParametersIntoStructure(params)
+            str = struct;
+            for i = 1 : floor(numel(params)/2)
+                 str.(params{2*i-1}) = params{2*i};
+            end
+        end
+        function normArray = normalize(A)
+        % normalize Normalize matrices that compose n-dimensional input array
+            
+            normArray = A;
+            numberOfMatrices = length(A(1,1,:));
+            for i = 1 : numberOfMatrices
+                normArray(:,:,i) = A(:,:,i)/sum(sum(A(:,:,i)));
+            end          
+        end
     end
 end

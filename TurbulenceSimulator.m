@@ -79,7 +79,13 @@ classdef TurbulenceSimulator<handle
                 rethrow(exception);
             end
         end
-        function intGamma = getIntensityForEachGamma(obj)
+        function intGamma = getIntensityForEachGamma(obj,varargin)
+            inParams = Util.transformInputParametersIntoStructure(varargin);
+            isNormalized = false;
+            if isfield(inParams,'Normalized')
+                isNormalized = inParams.Normalized; 
+            end
+            
             nGamma = length(obj.simulationParameters.gammaStrength);
             intGamma = cell(nGamma, 1);
             
@@ -91,6 +97,9 @@ classdef TurbulenceSimulator<handle
                     iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
                 intGamma{iGamma} = obj.getAverageOverRealizations();
+                if isNormalized
+                    intGamma{iGamma} = Util.normalize(intGamma{iGamma});
+                end
             end
         end
         % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
