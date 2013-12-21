@@ -119,20 +119,73 @@ classdef Util<handle
                 centerIndex(2) - floor(width/2) : ...
                 centerIndex(2) - floor(width/2) + width - 1, :);
         end
+        function B = rot90All( A, n )
+            %rot90All Rotates multidimensional array.
+            %   SYNTAX
+            %   B = rot90All(A,n)
+            %
+            %   DESCRIPTION
+            %   Applicable when A has dimensionality higher than 2, otherwise
+            %   reproduces behavior of function rot90.
+            %
+            %   When A has dimensions higher than 2, rotates matrices associated with
+            %   each set of indexes that correspond to dimensions 3 and higher. For
+            %   example, suppose
+            %   A = rand(3,2,2,3),
+            %   then rot90All will treat each matrix A(:,:,1,1), A(:,:,1,2), ...
+            %   A(:,:,end,end) separately, and apply rot90 to them.
+            %
+            %   Output will have same size as input.
+            
+            dim = ndims(A);
+            
+            if nargin == 1
+                n = 1;
+            end
+            
+            % Vector with sizes of A
+            m = zeros(1,dim);
+            for i = 1 : dim
+                m(i) = size(A,i);
+            end
+            
+            len = length(A(1,1,:));
+            B = zeros(m(1),m(2),len);
+            
+            for i = 1 : len
+                B(:,:,i) = rot90(A(:,:,i),n);
+            end
+            
+            B = reshape(B, m);
+            
+        end       
         function str = transformInputParametersIntoStructure(params)
             str = struct;
             for i = 1 : floor(numel(params)/2)
-                 str.(params{2*i-1}) = params{2*i};
+                str.(params{2*i-1}) = params{2*i};
             end
         end
         function normArray = normalize(A)
-        % normalize Normalize matrices that compose n-dimensional input array
+            % normalize Normalize matrices that compose n-dimensional input array
             
             normArray = A;
             numberOfMatrices = length(A(1,1,:));
             for i = 1 : numberOfMatrices
                 normArray(:,:,i) = A(:,:,i)/sum(sum(A(:,:,i)));
-            end          
+            end
+        end
+        function [optRow, optCol] = findOptimumSubplotGrid(num)
+            optRow = 1;
+            optCol = 1;
+            while true
+                if (optRow * optCol >= num)
+                    return
+                elseif (optCol == optRow)
+                    optCol = optCol + 1;
+                else
+                    optRow = optRow + 1;
+                end
+            end
         end
     end
 end

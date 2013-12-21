@@ -34,7 +34,7 @@ classdef Calculator
         end
     end
     
-    methods(Static, Access = private)
+    methods(Static, Access = public)
         function coincSlitPwr = coincidenceSlitIntegratePx(intProfile, slitWidth)
             %CoincSlitIntegratePx Integrates array over effective slit that is the
             %   convolution of a slit of width 'a' (in pixels) with itself.
@@ -59,35 +59,31 @@ classdef Calculator
             end
             
             numCells = length(intProfile);
-            [hght, wdth, numSeps] = getSize(intProfile);
-            [rowMax, colMax] = getIndexForMaxima(intProfile);
+            [hght, wdth, numSeps] = Calculator.getSize(intProfile);
+            [~, colMax] = Calculator.getIndexForMaxima(intProfile);
             
-            maxColumn = zeros(numCells, numSeps);
-            coincSlitPwr = zeros(numCells, numSeps);
+            coincSlitPwr = zeros(numCells, max(numSeps));
             
             for iCell = 1 : numCells
-                [~, maxColumn(iCell)] = max( max(intProfile{iCell}, [], 1) );
-                
                 cSlit = triang(2*slitWidth -1)';
                 lenSlit = length(cSlit);
                 
                 % Adjust the slit function to be of the same size as matrix 'A'
-                if (lenSlit > wdth)
-                    lenDiff = lenSlit - wdth;
+                if (lenSlit > wdth(iCell))
+                    lenDiff = lenSlit - wdth(iCell);
                     cSlit([1:floor(lenDiff/2), lenSlit-floor(lenDiff/2)+1:end]) = [];
                 else
-                    lenDiff = wdth - lenSlit;
-                    cSlit = [zeros(1, floor(lenDiff/2)), cSlit, ...
-                        zeros(1, ceil(lenDiff/2))];
+                    cSlit = [cSlit, zeros(1, wdth(iCell)-lenSlit)];
                 end
                 
                 % Center slit function horizontally on maximum element of 'A'
                 [~, xSlit] = max(cSlit);
-                cSlit = Displace(cSlit, maxColumn(iCell) - xSlit, 0);
+                cSlit = repmat(cSlit, [hght(iCell), 1, numSeps(iCell)]);
                 
-                cSlit = repmat(cSlit, hght, 1);
-                coincSlitPwr(iCell) = sum( sum( ...
-                    cSlit .* intProfile{iCell} ));
+                cSlit = Util.displace(cSlit, colMax(iCell,:) - xSlit, 0);
+                                
+                coincSlitPwr(iCell,:) = sum( sum( ...
+                    cSlit .* intProfile{iCell}, 2), 1);
                 
             end
             
@@ -109,31 +105,26 @@ classdef Calculator
                 intProfile = {intProfile};
             end
             numCells = length(intProfile);
-            hght = zeros(numCells, 1);
-            wdth = zeros(numCells, 1);
-            maxColumn = zeros(numCells, 1);
-            singSlitPwr = zeros(numCells, 1);
+            [hght, wdth, numSeps] = Calculator.getSize(intProfile);
+            [~, colMax] = Calculator.getIndexForMaxima(intProfile);
+            singSlitPwr = zeros(numCells, max(numSeps));
             
             for iCell = 1 : numCells
-                [hght(iCell), wdth(iCell)] = size(intProfile{iCell});
-                [~, maxColumn(iCell)] = max( max(intProfile{iCell}, 1) );
-                                
                 % Adjust the slit function to be of the same size as matrix 'A'
-                if (slitWidth >= wdth)
-                    slit = ones(1,wdth);
+                if (slitWidth >= wdth(iCell))
+                    slit = ones(1,wdth(iCell));
                 else
-                    slit = [zeros(1, maxColumn(iCell)-floor(slitWidth/2)), ...
-                        ones(1, slitWidth), ...
-                        zeros(1, wdth-maxColumn(iCell)-ceil(slitWidth/2))];
+                    slit = [ones(1,slitWidth), zeros(1,wdth(iCell)-slitWidth)];
                 end
                 
                 % Center slit function horizontally on maximum element of 'A'
                 [~, xSlit] = max(slit);
-                slit = Displace(slit, maxColumn(iCell)-xSlit, 0);
                 
-                slit = repmat(slit, hght, 1);
-                singSlitPwr(iCell) = sum( sum( ...
-                    slit .* intProfile{iCell} ));
+                slit = repmat(slit, [hght(iCell), 1, numSeps(iCell)]);
+                slit = Util.displace(slit, colMax(iCell,:)-xSlit, 0);
+                                
+                singSlitPwr(iCell,:) = sum( sum( ...
+                    slit .* intProfile{iCell}, 2), 1);
                 
             end
             
@@ -149,12 +140,26 @@ classdef Calculator
             numSep = zeros(numCells, 1);
             
             for iCell = 1 : numCells
-                [hght(iCell), wdth(iCell), A(iCell)] = ...
+                [hght(iCell), wdth(iCell), numSep(iCell)] = ...
                     size(A{iCell});
             end
         end
         function [rowMax, colMax] = getIndexForMaxima(A)
-           % IMPLEMENT ME 
+            if ~iscell(A)
+                A = {A};
+            end
+            numCells = length(A);
+            numSeps = length(A{1}(1,1,:));
+            
+            rowMax = zeros(numCells,numSeps);
+            colMax = zeros(numCells,numSeps);
+            
+            for iCell = 1 : numCells
+                for iSep = 1 : numSeps
+                    [~, rowMax(iCell,iSep)] = max( max(A{iCell}(:,:,iSep),[],2), [],1);
+                    [~, colMax(iCell,iSep)] = max( max(A{iCell}(:,:,iSep),[],1), [],2);
+                end
+            end
         end
     end
 end

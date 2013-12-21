@@ -10,12 +10,13 @@ classdef Plotter<handle
             figure;
             set(gcf, 'Units', 'normalized', 'Position', [0.625 0.28 0.365 0.61]);
             lenG = length(gammaValues);
+            [numRows, numCols] = Util.findOptimumSubplotGrid(lenG);
             
             for iG = 1 : lenG
-                subplot( ceil(sqrt(lenG)), ceil(sqrt(lenG)), iG);
+                subplot( numRows, numCols, iG);
                 imagesc(intProfiles{iG}(:, :, 1));
                 axis off;
-                title(['\gamma = ', num2str(g0(iG)*1e6), ' \mum']);
+                title(['\gamma = ', num2str(gammaValues(iG)*1e6), ' \mum']);
             end
         end
         

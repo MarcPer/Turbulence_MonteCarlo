@@ -37,6 +37,7 @@ classdef TurbulenceSimulator<handle
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
             phz = obj.phaseScreenProfiles;
+            phz = obj.inversionAndFourthOrderOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             fieldSep = zeros(Ny, Nx, nSep);
@@ -104,5 +105,18 @@ classdef TurbulenceSimulator<handle
         end
         % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
     end
-    
+    methods(Access = private)
+        function phScreen = inversionAndFourthOrderOperationsOnScreen(obj) 
+            phScreen = obj.phaseScreenProfiles;
+            if ~(obj.simulationParameters.isFourthOrder)
+                return;
+            end
+            
+            if obj.simulationParameters.isInverted
+                phScreen = phScreen + Util.rot90All(phScreen,2);
+            else
+                phScreen = 2*phScreen;
+            end
+        end
+    end
 end

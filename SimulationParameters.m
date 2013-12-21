@@ -5,6 +5,7 @@ classdef SimulationParameters<handle
     	% USER INPUT
 		% Geometry
         isFourthOrder;
+        isInverted;
         propagationDistance;
         numberOfPhasePlanes;
 		turbulenceRegionStartPosition;
@@ -44,7 +45,7 @@ classdef SimulationParameters<handle
     methods(Access = public)
         function simParams = SimulationParameters(varargin)
            simParams.gammaCurrentIndex = 1;
-           simParams.checkIfFourthOrder(varargin);
+           simParams.checkIfFourthOrderAndInverted(varargin);
            fData = simParams.openParametersFile();
            simParams.readParameters(fData);
            simParams.setDefaultValueForBlankParameters();
@@ -87,10 +88,17 @@ classdef SimulationParameters<handle
             r0sw(isinf(r0sw)) = NaN;
             
             D1 = obj.regionOfInterestAtSourcePlane;
-            D2 = obj.regionOfInterestAtObservationPlane + ...
-                max(obj.transverseSeparationInR0Units) * r0sw;
-            D1p = max(D1 + modelSensitivity*wvl*L ./ r0sw);
-            D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
+            D2 = obj.regionOfInterestAtObservationPlane;
+            
+            if all(isnan(r0sw))
+                D1p = D1;
+                D2p = D2;
+            else
+                D1 = D1 + max(obj.transverseSeparationInR0Units) * r0sw;
+%               D2 = D2; 
+                D1p = max(D1 + modelSensitivity*wvl*L ./ r0sw);
+                D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
+            end
         end
         function [deltaX, deltaY] = getTransverSeparationInPixels(obj, sepIndex)
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
@@ -140,15 +148,13 @@ classdef SimulationParameters<handle
     end
       
     methods(Access = private)
-        function checkIfFourthOrder(obj,isFourthOrder)
-            if (numel(isFourthOrder) == 0)
-                obj.isFourthOrder = 0;
-            elseif (numel(isFourthOrder) == 1)
-                obj.isFourthOrder = isFourthOrder;
-            else
-                if (strcmpi('fourthorder',isFourthOrder{1}))
-                    obj.isFourthOrder = isFourthOrder{2};
-                end
+        function checkIfFourthOrderAndInverted(obj,params)
+            str = Util.transformInputParametersIntoStructure(params);
+            if isfield(str, 'FourthOrder')
+                obj.isFourthOrder = str.FourthOrder;
+            end
+            if isfield(str, 'Inverted')
+                obj.isInverted = str.Inverted;
             end
         end
         function readParameters(obj,fData)
@@ -376,6 +382,9 @@ classdef SimulationParameters<handle
         function fData = openParametersFile()
             fileName = 'inputParameters.dat';
             fileName = uigetfile(fileName);
+            if (fileName == 0)
+                return;
+            end
             fid = fopen(fileName);
             try
                 fData = fread(fid, inf, '*char');
