@@ -15,26 +15,47 @@ classdef Calculator
     end
     
     methods(Static)
-        function [pwrSlit, plotInfo] = computePowerThroughSlit(intProfile, simParams)
+        function pwrSlit = computePowerThroughSlit(intProfile, simParams)
+        % computePowerThroughSlit returns power for each gamma and
+        % separation.
+        %
+        % SYNTAX:
+        % [pwrSlit, plotInfo] = computePowerThroughSlit(intProfile,
+        % simParams)
+        %
+        % OUTPUT:
+        % pwrSlit: Matrix for power through slit (i,j) -> [Separation, Gamma]
+        % plotInfo: Structure with plot title and labels
+        %
+        % INPUT:
+        % intProfile: Cell (indexed by Gamma), each element consisting of
+        % an array indexed as [profile row, profile column, separation]
+        % simParams: Instance of SimulationParameters
             slitWidthPx = round(simParams.slitWidth / ...
                 simParams.gridSpacingObservationPlane);
             
+            pwrSlit = struct;
+            pwrSlit.data.columnParams = simParams.gammaStrength;
+            pwrSlit.data.rowParams = simParams.transverseSeparationInR0Units;
+            
             if simParams.isFourthOrder
-                pwrSlit = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit.data.values = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
             else
-                pwrSlit = Calculator.intensitySlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit.data.values = Calculator.intensitySlitIntegratePx(intProfile, slitWidthPx);
             end
             
             tit = 'Intensity vs Turbulence Strength';
-            labelX = '\gamma';
-            labelY = 'intensity';
-            plotInfo = struct('title', tit, ...
-                'labelX', labelX, 'labelY', labelY);
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in r0)';
+            labelZ = 'intensity';
+            pwrSlit.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ);
             
         end
     end
     
-    methods(Static, Access = public)
+    methods(Static, Access = private)
         function coincSlitPwr = coincidenceSlitIntegratePx(intProfile, slitWidth)
             %CoincSlitIntegratePx Integrates array over effective slit that is the
             %   convolution of a slit of width 'a' (in pixels) with itself.
@@ -62,7 +83,7 @@ classdef Calculator
             [hght, wdth, numSeps] = Calculator.getSize(intProfile);
             [~, colMax] = Calculator.getIndexForMaxima(intProfile);
             
-            coincSlitPwr = zeros(numCells, max(numSeps));
+            coincSlitPwr = zeros(max(numSeps),numCells);
             
             for iCell = 1 : numCells
                 cSlit = triang(2*slitWidth -1)';
@@ -82,7 +103,7 @@ classdef Calculator
                 
                 cSlit = Util.displace(cSlit, colMax(iCell,:) - xSlit, 0);
                                 
-                coincSlitPwr(iCell,:) = sum( sum( ...
+                coincSlitPwr(:,iCell) = sum( sum( ...
                     cSlit .* intProfile{iCell}, 2), 1);
                 
             end
@@ -107,7 +128,7 @@ classdef Calculator
             numCells = length(intProfile);
             [hght, wdth, numSeps] = Calculator.getSize(intProfile);
             [~, colMax] = Calculator.getIndexForMaxima(intProfile);
-            singSlitPwr = zeros(numCells, max(numSeps));
+            singSlitPwr = zeros(max(numSeps),numCells);
             
             for iCell = 1 : numCells
                 % Adjust the slit function to be of the same size as matrix 'A'
@@ -123,7 +144,7 @@ classdef Calculator
                 slit = repmat(slit, [hght(iCell), 1, numSeps(iCell)]);
                 slit = Util.displace(slit, colMax(iCell,:)-xSlit, 0);
                                 
-                singSlitPwr(iCell,:) = sum( sum( ...
+                singSlitPwr(:,iCell) = sum( sum( ...
                     slit .* intProfile{iCell}, 2), 1);
                 
             end

@@ -12,8 +12,8 @@ innerScale: 0
 wavelength: 325e-9
 waistAtObservationPlane: 60e-6
 # Simulation
-numberOfRealizations: 1
+numberOfRealizations: 10
 transverseGridSize: 1024
 gridSpacingSourcePlane: 5.5e-5
 gridSpacingObservationPlane: 7e-6
-transverseSeparationInR0Units: 0, 0.05, 0.1
+transverseSeparationInR0Units: 0, 0.05, 0.1, 0.15

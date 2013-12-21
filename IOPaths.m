@@ -2,6 +2,7 @@ classdef IOPaths<handle
     
     properties(GetAccess = public, SetAccess = private)
        dropboxFolder;
+       inputParametersFileName;
        rootExportFolder;
        importFolders = {'Numerical simulation of optical wave propagation'};
     end
@@ -39,6 +40,24 @@ classdef IOPaths<handle
                     expFileName = fn;
                 end
             end
+        end
+        function fData = openParametersFile(io)
+            fileName = 'inputParameters.dat';
+            fileName = uigetfile(fileName);
+            if (fileName == 0)
+                return;
+            end
+            io.inputParametersFileName = fileName;
+            fid = fopen(fileName);
+            try
+                fData = fread(fid, inf, '*char');
+                fData = fData';
+            catch exception
+                fprintf('Error reading inputParameters.dat.');
+                fclose(fid);
+                rethrow(exception);
+            end
+            fclose(fid);
         end
     end
     

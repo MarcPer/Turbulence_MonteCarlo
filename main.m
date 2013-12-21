@@ -22,7 +22,7 @@ usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
-simParams = SimulationParameters('FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
+simParams = SimulationParameters(inOut,'FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
@@ -43,18 +43,14 @@ end
 
 %% COMPUTE RELEVANT VALUES
 slitWidth = 50e-6;
-[pwrSlit, plotInfo] = ...
-    Calculator.computePowerThroughSlit(intProfileGamma, simParams);
+pwrSlit = Calculator.computePowerThroughSlit(intProfileGamma, simParams);
 
 %% PLOT RESULTS
 
 % Beam transverse profiles at observation plane ('measured gammas only')
+close all;
 Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGamma);
-
-% Pslit = Pslit/Pslit(1);
-% figure(2);
-% set(gcf, 'Units', 'normalized', 'Position', [2/3 0.05 1/3 1/4]);
-% plot(g, Pslit, 'LineWidth', 1.5);
+Plotter.plot2D(simParams.gammaStrength, pwrSlit);
 
 % %% EXPORT RESULTS (only if simulation was completed)
 % 

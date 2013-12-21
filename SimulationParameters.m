@@ -43,10 +43,10 @@ classdef SimulationParameters<handle
     end
        
     methods(Access = public)
-        function simParams = SimulationParameters(varargin)
+        function simParams = SimulationParameters(ioPath,varargin)
            simParams.gammaCurrentIndex = 1;
            simParams.checkIfFourthOrderAndInverted(varargin);
-           fData = simParams.openParametersFile();
+           fData = ioPath.openParametersFile();
            simParams.readParameters(fData);
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
@@ -376,27 +376,6 @@ classdef SimulationParameters<handle
                     max(delta), zmax);
             end
         end
-    end
-        
-    methods(Static)
-        function fData = openParametersFile()
-            fileName = 'inputParameters.dat';
-            fileName = uigetfile(fileName);
-            if (fileName == 0)
-                return;
-            end
-            fid = fopen(fileName);
-            try
-                fData = fread(fid, inf, '*char');
-                fData = fData';
-            catch exception
-                fprintf('Error reading inputParameters.dat.');
-                fclose(fid);
-                rethrow(exception);
-            end
-            fclose(fid);
-        end
-        
     end
 end
 
