@@ -5,7 +5,7 @@ classdef Exporter
     end
     
     methods(Static)
-        function exportToDisk(ioPaths,data)
+        function exportToDisk(ioPaths,data,userInput)
             filePath = ioPaths.getExportPath;
             if ~exist(filePath, 'dir')
                 mkdir(filePath)
@@ -17,6 +17,7 @@ classdef Exporter
                 error('exporter:fileOpen', 'Could not open %s.', fileName);
             end
             try
+                Exporter.writeSimulationType(fid,userInput);
                 Exporter.saveHeader(fid,data);
                 Exporter.saveData(fid,data);
                 Exporter.saveTimeStamp(fid);
@@ -30,6 +31,20 @@ classdef Exporter
     end
     
     methods(Static, Access = private)
+        function writeSimulationType(fid, userInput)
+            if userInput.isFourthOrder
+                isFourthOrderString = 'Fourth-order';
+            else
+                isFourthOrderString = 'Second-order';
+            end
+            if userInput.isInverted
+                isInvertedString = 'with source and observation plane inversion';
+            else
+                isInvertedString = 'without inversion';
+            end
+            fprintf(fid,'Simulation type: %s, %s.\n', ...
+                isFourthOrderString, isInvertedString);
+        end
         function saveHeader(fid, data)
             fprintf(fid, 'Row: %s\n', data.info.labelRow); 
             fprintf(fid, 'Column: %s\n', data.info.labelColumn);
@@ -39,19 +54,19 @@ classdef Exporter
             fprintf(fid, 'r\\c');
             fprintf(fid, '\t%3.3g', data.data.columnParams);
             fprintf(fid, '\n');
-            dataToWrite = [data.data.rowParams, data.data.values];
+            dataToWrite = [data.data.rowParams', data.data.values];
             for ln = 1 : size(dataToWrite, 1)
                 fprintf(fid, '%3.3g\t', dataToWrite(ln,:));
-                fprintf('\n');
+                fprintf(fid, '\n');
             end
         end
         function saveTimeStamp(fid)
             dt = datestr(date, 'yyyy-mm-dd');
             tm = datestr(clock, 'HH:MM:SS');
-            fprintf(fid,'\n\nSimulação finalizada às %s do dia %s.\n', tm, dt);
+            fprintf(fid,'\n\nSimulatin ended at %s of %s.\n', tm, dt);
         end
         function saveParameters(fidWriteTo, inputFileName)
-            fprintf(fidWriteTo, '\nParâmetros --\n');
+            fprintf(fidWriteTo, '\nParameters (null values are set to default) --\n');
             fidReadFrom = fopen(inputFileName);
             try
                 currentLine = fgetl(fidReadFrom);

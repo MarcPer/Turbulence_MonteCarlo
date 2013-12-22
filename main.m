@@ -53,7 +53,7 @@ Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGam
 Plotter.plot2D(pwrSlit);
 
 % %% EXPORT RESULTS (only if simulation was completed)
-Exporter.exportToDisk(ioPaths, pwrSlit);
+Exporter.exportToDisk(ioPaths, pwrSlit, usrIn);
  
 % %% SHUTDOWN COMPUTER?
 % wtime = 90;         % Time limit to abort shutdown
