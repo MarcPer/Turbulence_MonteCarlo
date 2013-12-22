@@ -53,7 +53,7 @@ classdef IOPaths<handle
                 fData = fread(fid, inf, '*char');
                 fData = fData';
             catch exception
-                fprintf('Error reading inputParameters.dat.');
+                fprintf('Error reading %s.\n',fileName);
                 fclose(fid);
                 rethrow(exception);
             end
