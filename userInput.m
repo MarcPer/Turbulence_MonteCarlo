@@ -6,7 +6,7 @@ classdef UserInput<handle
     end
     
     methods(Access = public)
-       function getSimulationType(obj)
+        function getSimulationType(obj)
             choice = questdlg('Select simulation type', 'Simulation type', ...
                 'Coincidences with inversion', 'Coincidences without inversion', ...
                 'Intensity', 'Intensity');
@@ -23,7 +23,50 @@ classdef UserInput<handle
                     obj.isInverted = 0;
             end
         end 
-        
+        function shutdownComputer(obj)
+            wtime = 90;         % Time limit to abort shutdown
+            
+            if ~(obj.enumShutdown)
+                return;
+            end
+            
+            if obj.enumShutdown == 1
+                shut_mode = 'shutdown';
+                shut_cmd = 'shutdown /s';
+            else
+                shut_mode = 'hibernation';
+                shut_cmd = 'shutdown /h';
+            end
+            fprintf('Computer %s enabled.\n', shut_mode);
+            
+            tic;
+            reply_shut = 'k';
+            while (~sum(strcmpi(reply_shut, {'y', 'n', ''})) && toc < wtime)
+                reply_shut = waitinput(sprintf('Proceed with %s? Y/N [Y]:\n', shut_mode), ...
+                    wtime, 's');
+            end
+            if (isempty(reply_shut) || ~sum(strcmpi(reply_shut, {'y', 'n'})))
+                reply_shut = 'Y';
+            end
+            
+            switch lower(reply_shut)
+                case 'y'
+                    if obj.enumShutdown == 1
+                        fprintf('\nShutting down.\n');
+                    elseif obj.enumShutdown == 2
+                        fprintf('\nHibernating.\n');
+                    end
+                    pause(3);
+                    system(shut_cmd);
+                otherwise
+                    if obj.enumShutdown == 1
+                        fprintf('Shutdown aborted.\n');
+                    elseif obj.enumShutdown == 2
+                        fprintf('Hibernation aborted.\n');
+                    end
+             end
+ 
+        end
     end
     
     methods(Static)
@@ -76,7 +119,7 @@ classdef UserInput<handle
                     ' 0, 1 or 2.']);
             end
             
-            obj.enumShutdown = 0;
+            obj.enumShutdown = value;
             if (value == 1)
                 shutMode = 'SHUTDOWN';
             end

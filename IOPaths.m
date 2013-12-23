@@ -4,7 +4,8 @@ classdef IOPaths<handle
        dropboxFolder;
        inputParametersFileName;
        rootExportFolder;
-       importFolders = {'Numerical simulation of optical wave propagation'};
+       importFolders = {'Numerical simulation of optical wave propagation', ...
+           'waitinput'};
     end
     
     methods (Access = public)
