@@ -187,5 +187,26 @@ classdef Util<handle
                 end
             end
         end
+        function pvtProp = getSetPrivateProperties(obj)
+            pvtProp = {};
+            allProp = properties(obj);
+            for p = 1 : length(allProp)
+                metaProp = findprop(obj, allProp{p});
+                if strcmpi(metaProp.SetAccess, 'private')
+                    pvtProp = [pvtProp; allProp{p}];
+                end
+            end
+        end
+        function pblProp = getSetPublicProperties(obj)
+            pblProp = {};
+            allProp = properties(obj);
+            for p = 1 : length(allProp)
+                metaProp = findprop(obj, allProp{p});
+                if strcmpi(metaProp.SetAccess, 'public')
+                    pblProp = [pblProp; allProp{p}];
+                end
+            end
+        end
+        
     end
 end

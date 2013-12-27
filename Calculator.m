@@ -47,7 +47,7 @@ classdef Calculator
             tit = 'Intensity vs Turbulence Strength';
             labelColumn = '\gamma';
             labelRow = 'Separation (in r0)';
-            labelZ = 'intensity';
+            labelZ = 'Power through slit';
             pwrSlit.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
                 'labelZ', labelZ);
