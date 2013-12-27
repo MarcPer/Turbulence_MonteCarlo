@@ -1,19 +1,17 @@
 function phz = generateScreen(params)
 
-narginchk(1,2);
-
 r0 = params.friedCoherenceRadiusMatrix;
-[NxEff, NyEff] = params.getPhaseScreenGridSize;
+[Nx, Ny] = params.getPhaseScreenGridSize;
 delta = params.gridSpacingVector;
 nPlanes = params.numberOfPhasePlanes;
 L0 = params.outerScale;
 l0 = params.innerScale;
 gammaIndex = params.gammaCurrentIndex;
 
-N = NxEff;      % Temporary, before non-square grid is implemented
-NyEff = NxEff;  % Temporary, before non-square grid is implemented
+N = Nx;      % Temporary, before non-square grid is implemented
+Ny = Nx;     % Temporary, before non-square grid is implemented
 
-phz = zeros(NyEff,NxEff,nPlanes);
+phz = zeros(Ny,Nx,nPlanes);
 
 for iScr = 1 : nPlanes
     if isinf(r0(gammaIndex, iScr))

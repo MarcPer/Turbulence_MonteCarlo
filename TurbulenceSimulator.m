@@ -56,8 +56,8 @@ classdef TurbulenceSimulator<handle
         function IavgRe = getAverageOverRealizations(obj)
             obj.abortButtonHandle = UserInput.createWaitBar;
             try
-                nRe = obj.simulationParameters.numberOfRealizations;
                 nSep = obj.numberOfTransverseSeparations;
+                nRe = obj.getNumberOfRealizations;
                 [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
                 IavgRe = zeros(Ny, Nx, nSep);
                 
@@ -116,6 +116,16 @@ classdef TurbulenceSimulator<handle
                 phScreen = phScreen + Util.rot90All(phScreen,2);
             else
                 phScreen = 2*phScreen;
+            end
+        end
+        function nRe = getNumberOfRealizations(obj)
+            nReInput = obj.simulationParameters.numberOfRealizations;
+            idxGamma = obj.simulationParameters.gammaCurrentIndex;
+            r0 = obj.simulationParameters.totalFriedCoherenceRadiusByStrength;
+            if isinf(r0(idxGamma))
+                nRe = 1;
+            else
+                nRe = nReInput;
             end
         end
     end

@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -42,7 +42,6 @@ if turbSimulator.isAborted
 end
 
 %% COMPUTE RELEVANT VALUES
-slitWidth = 50e-6;
 pwrSlit = Calculator.computePowerThroughSlit(intProfileGamma, simParams);
 
 %% PLOT RESULTS

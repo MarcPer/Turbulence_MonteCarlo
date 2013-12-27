@@ -33,6 +33,11 @@ classdef Calculator
         % simParams: Instance of SimulationParameters
             slitWidthPx = round(simParams.slitWidth / ...
                 simParams.gridSpacingObservationPlane);
+            if (slitWidthPx == 0)
+                fprintf('Slit width set to smaller than pixel size.');
+                fprintf('Setting to 1 pixel = %3.3g m', simParams.gridSpacingObservationPlane);
+                slitWidthPx = 1;
+            end
             
             pwrSlit = struct;
             pwrSlit.data.columnParams = simParams.gammaStrength;
