@@ -3,17 +3,18 @@ propagationDistance: 5400
 numberOfPhasePlanes: 20
 turbulenceRegionStartPosition:
 turbulenceRegionEndPosition:
-slitWidth: 10e-3
+slitWidth: 5e-2
 # Turbulence Statistics
 gammaStrength: 0, 1e-3, 1e-2
 outerScale: Inf
 innerScale: 0
 # Beam
 wavelength: 1550e-9
-waistAtObservationPlane: 22e-3
+waistAtObservationPlane: 1e-1
 # Simulation
-numberOfRealizations: 20
-transverseGridSize: 1024
-gridSpacingSourcePlane: 0.0034647
-gridSpacingObservationPlane: 0.0031104
-transverseSeparationInR0Units: 0, 0.01, 0.05
+numberOfRealizations: 100
+(small but enough to give a qualitative picture)
+transverseGridSize: 512
+gridSpacingSourcePlane: 0.004
+gridSpacingObservationPlane: 0.004
+transverseSeparationInR0Units: 0, 0.01, 0.05, 0.1

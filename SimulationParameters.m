@@ -303,13 +303,15 @@ classdef SimulationParameters<handle
             D1p = params.effectiveSourceROI;
             D2p = params.effectiveObsROI;
             
-            fail1 = (deltan >= -D2p/D1p*delta1 + wvl*L/D1p);
+            deltaMin = abs(-D2p/D1p*delta1 + wvl*L/D1p);
+            
+            fail1 = (deltan >= deltaMin);
             fprintf('Constraint 1: ');
             if ~fail1
                 fprintf('Satisfied\n');
             else
                 fprintf('Not satisfied [deltan = %3.2e should be smaller than %3.2e]\n', ...
-                    deltan, -D2p/D1p*delta1 + wvl*L/D1p);
+                    deltan, deltaMin);
             end
         end
         function fail2 = checkConstraint2(obj,params)

@@ -74,9 +74,13 @@ classdef TurbulenceSimulator<handle
                     UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
                 end
                 delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
                 IavgRe = IavgRe/nRe;
             catch exception
-                delete(obj.abortButtonHandle);
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
                 rethrow(exception);
             end
         end
