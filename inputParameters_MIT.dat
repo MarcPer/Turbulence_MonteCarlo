@@ -5,7 +5,7 @@ turbulenceRegionStartPosition:
 turbulenceRegionEndPosition:
 slitWidth: 5e-2
 # Turbulence Statistics
-gammaStrength: 0, 1e-3, 1e-2
+gammaStrength: 0, 1e-2
 outerScale: Inf
 innerScale: 0
 # Beam
@@ -15,6 +15,6 @@ waistAtObservationPlane: 1e-1
 numberOfRealizations: 100
 (small but enough to give a qualitative picture)
 transverseGridSize: 512
-gridSpacingSourcePlane: 0.004
-gridSpacingObservationPlane: 0.004
-transverseSeparationInR0Units: 0, 0.01, 0.05, 0.1
+gridSpacingSourcePlane: 0.0071473
+gridSpacingObservationPlane: 0.00241
+transverseSeparationInR0Units: 0, 0.5, 1, 5

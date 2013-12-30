@@ -1,7 +1,7 @@
 %% Clear and close all
 close all; clear all;
 %
-% This script simulates the effect of turbulence by modelling it as a
+% This script simulates the effect of turbulence, modelling it as a
 % series of phase screens. Technical details are taken from
 %
 % Numerical Simulation of Optical Wave Propagation
@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 0;
+usrIn.enumShutdown = 2;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -37,7 +37,7 @@ turbSimulator = TurbulenceSimulator(simParams);
 intProfileGamma = turbSimulator.getIntensityForEachGamma('Normalized', true);
 
 if turbSimulator.isAborted
-    fprintf('Simulation aborted.');
+    fprintf('Simulation aborted.\n');
     return;
 end
 
