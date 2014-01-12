@@ -118,6 +118,16 @@ classdef SimulationParameters<handle
             [x1,y1] = meshgrid((-Nx/2 : Nx/2-1) * delta1, ...
                 (-Ny/2 : Ny/2-1) * delta1);
         end
+        function [xn, yn] = getMeshGridAtObservationPlane(obj)
+            [Nx, Ny] = obj.getTransverseGridSize;
+            deltan = obj.gridSpacingObservationPlane;
+            [xn,yn] = meshgrid((-Nx/2 : Nx/2-1) * deltan, ...
+                (-Ny/2 : Ny/2-1) * deltan);
+        end
+        function circ = getCircularApertureArray(obj, apertureRadius)
+            [xn, yn] = obj.getMeshGridAtObservationPlane;
+            circ = ( xn.^2 + yn.^2 <= apertureRadius^2);
+        end
 		function fail = constraintAnalysis(obj)
         L = obj.propagationDistance;
         wn = obj.waistAtObservationPlane;
@@ -144,7 +154,13 @@ classdef SimulationParameters<handle
 		
 		fail = (fail1 || fail2 || fail3 || fail4);
         end
-
+        function setPointDetectorAtObservationPlane(obj,isPointDtc)
+            if isPointDtc
+                r0 = obj.totalFriedCoherenceRadiusByStrength;
+                r0 = ~isinf(r0) .* r0;
+                obj.regionOfInterestAtObservationPlane = r0;
+            end
+        end
     end
       
     methods(Access = private)
@@ -242,10 +258,9 @@ classdef SimulationParameters<handle
             
             d1 = linspace(0, 1.1*wvl*L/D2p, 100);
             dn = linspace(0, 1.1*wvl*L/D1p, 100);
-            [d1, dn] = meshgrid(d1, dn);
             
             deltan_max = -D2p/D1p*d1 + wvl*L/D1p;
-            plot(d1(1,:), deltan_max(1,:), 'k--', 'Linewidth', 2);
+            plot(d1, deltan_max, 'k--', 'Linewidth', 2);
             axis([0 d1(end) 0 dn(end)]);
             set(gca, 'Color', 'none', 'Layer', 'top');
         end

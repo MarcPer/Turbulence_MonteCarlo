@@ -18,11 +18,12 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters(ioPaths,'FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
+simParams.setPointDetectorAtObservationPlane(true);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
@@ -34,25 +35,22 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-intProfileGamma = turbSimulator.getIntensityForEachGamma('Normalized', true);
+pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma('Normalized', true);
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.\n');
     return;
 end
 
-%% COMPUTE RELEVANT VALUES
-pwrSlit = Calculator.computePowerThroughSlit(intProfileGamma, simParams);
-
 %% PLOT RESULTS
 
 % Beam transverse profiles at observation plane ('measured gammas only')
 close all;
-Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGamma);
-Plotter.plot2D(pwrSlit);
+% Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGamma);
+Plotter.plot2D(pwrGamma);
 
 % %% EXPORT RESULTS (only if simulation was completed)
-Exporter.exportToDisk(ioPaths, pwrSlit, usrIn, simParams);
+Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, simParams);
  
 % %% SHUTDOWN COMPUTER?
 usrIn.shutdownComputer;

@@ -10,7 +10,8 @@ classdef TurbulenceSimulator<handle
     end
     
     properties (SetAccess = private, GetAccess = public)
-        isAborted; 
+        isAborted;
+        isNormalized;
     end
     
     methods
@@ -36,7 +37,6 @@ classdef TurbulenceSimulator<handle
         end
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
-            phz = obj.phaseScreenProfiles;
             phz = obj.inversionAndFourthOrderOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
@@ -53,46 +53,17 @@ classdef TurbulenceSimulator<handle
                 fieldSep(:,:,iSep) = obj.propagate(phScreen);
             end
         end
-        function IavgRe = getAverageOverRealizations(obj)
-            obj.abortButtonHandle = UserInput.createWaitBar;
-            try
-                nSep = obj.numberOfTransverseSeparations;
-                nRe = obj.getNumberOfRealizations;
-                [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
-                IavgRe = zeros(Ny, Nx, nSep);
-                
-                for iRe = 1 : nRe
-                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
-                    if obj.isAborted
-                        break;
-                    end
-                    obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
-                    outputField =  ...
-                        obj.getFieldForEachTransverseSeparation();
-                    intensitySingleRealization = abs(outputField).^2;
-                    IavgRe = IavgRe + intensitySingleRealization;
-                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
-                end
-                delete(obj.abortButtonHandle);
-                obj.abortButtonHandle = [];
-                IavgRe = IavgRe/nRe;
-            catch exception
-                if ~isempty(obj.abortButtonHandle)
-                    delete(obj.abortButtonHandle);
-                    obj.abortButtonHandle = [];
-                end
-                rethrow(exception);
-            end
-        end
-        function intGamma = getIntensityForEachGamma(obj,varargin)
+        function intGamma = getIrradianceForEachGamma(obj,varargin)
+            % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
-            isNormalized = false;
+            obj.isNormalized = false;
             if isfield(inParams,'Normalized')
-                isNormalized = inParams.Normalized; 
+                obj.isNormalized = inParams.Normalized;
             end
             
             nGamma = length(obj.simulationParameters.gammaStrength);
-            intGamma = cell(nGamma, 1);
+            intGamma = obj.fillIrradianceMetaData();
+            intGamma.values = cell(nGamma, 1);
             
             for iGamma = 1 : nGamma
                 if obj.isAborted
@@ -101,16 +72,39 @@ classdef TurbulenceSimulator<handle
                 UserInput.printOutProgress('Turbulence strength', ...
                     iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
-                intGamma{iGamma} = obj.getAverageOverRealizations();
-                if isNormalized
-                    intGamma{iGamma} = Util.normalize(intGamma{iGamma});
+                intGamma.values{iGamma} = obj.getAverageIrradianceOverRealizations();
+                if obj.isNormalized
+                    intGamma.values{iGamma} = Util.normalize(intGamma{iGamma});
                 end
             end
         end
-        % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
+        function pwrGamma = getPowerOnCircularApertureForEachGamma(obj,varargin)
+            % Returns cell{idxGamma} = pwr(separationIndex)
+            inParams = Util.transformInputParametersIntoStructure(varargin);
+            obj.isNormalized = false;
+            if isfield(inParams,'Normalized')
+                obj.isNormalized = inParams.Normalized;
+            end
+            
+            nGamma = length(obj.simulationParameters.gammaStrength);
+            nSep = obj.numberOfTransverseSeparations;
+            pwrGamma = obj.fillCircularApertureMetaData();
+            pwrGamma.data.values = zeros(nSep,nGamma);
+            
+            for iGamma = 1 : nGamma
+                if obj.isAborted
+                    break;
+                end
+                UserInput.printOutProgress('Turbulence strength', ...
+                    iGamma, nGamma);
+                obj.simulationParameters.gammaCurrentIndex = iGamma;
+                pwrGamma.data.values(:,iGamma) = obj.getPowerOnCircularApertureAveragedOverRealizations();
+            end
+            
+        end
     end
     methods(Access = private)
-        function phScreen = inversionAndFourthOrderOperationsOnScreen(obj) 
+        function phScreen = inversionAndFourthOrderOperationsOnScreen(obj)
             phScreen = obj.phaseScreenProfiles;
             if ~(obj.simulationParameters.isFourthOrder)
                 return;
@@ -132,5 +126,106 @@ classdef TurbulenceSimulator<handle
                 nRe = nReInput;
             end
         end
+        function pwr = getPowerOnCircularApertureAveragedOverRealizations(obj)
+            obj.abortButtonHandle = UserInput.createWaitBar;
+            try
+                nSep = obj.numberOfTransverseSeparations;
+                nRe = obj.getNumberOfRealizations;
+                pwr = zeros(nSep,1);
+                
+                for iRe = 1 : nRe
+                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+                    if obj.isAborted
+                        break;
+                    end
+                    obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
+                    outputField =  ...
+                        obj.getFieldForEachTransverseSeparation();
+                    intensitySingleRealization = abs(outputField).^2;
+                    if obj.isNormalized
+                        intensitySingleRealization = Util.normalize(intensitySingleRealization);
+                    end
+                    pwrSingleRealization = obj.getPowerOverCircularAperture(intensitySingleRealization, ...
+                        min(obj.simulationParameters.regionOfInterestAtObservationPlane));
+                    pwr = pwr + pwrSingleRealization(:);
+                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
+                end
+                delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
+                pwr = pwr/nRe;
+            catch exception
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
+                rethrow(exception);
+            end
+        end
+        function irrStruct = fillIrradianceMetaData(obj)
+            irrStruct = struct;
+            simParams = obj.simulationParameters;
+            irrStruct.data.columnParams = simParams.gammaStrength;
+            irrStruct.data.rowParams = simParams.transverseSeparationInR0Units;
+            
+            tit = 'Irradiance Profile';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in units of r0)';
+            labelZ = 'Irradiance';
+            irrStruct.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ);
+        end
+        function IavgRe = getAverageIrradianceOverRealizations(obj)
+            obj.abortButtonHandle = UserInput.createWaitBar;
+            try
+                nSep = obj.numberOfTransverseSeparations;
+                nRe = obj.getNumberOfRealizations;
+                [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+                IavgRe = zeros(Ny, Nx, nSep);
+                
+                for iRe = 1 : nRe
+                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+                    if obj.isAborted
+                        break;
+                    end
+                    obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
+                    outputField =  ...
+                        obj.getFieldForEachTransverseSeparation();
+                    IavgRe = IavgRe + abs(outputField).^2;
+                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
+                end
+                delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
+                IavgRe = IavgRe/nRe;
+            catch exception
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
+                rethrow(exception);
+            end
+        end
+        function pwrStruct = fillCircularApertureMetaData(obj)
+            pwrStruct = struct;
+            simParams = obj.simulationParameters;
+            pwrStruct.data.columnParams = simParams.gammaStrength;
+            pwrStruct.data.rowParams = simParams.transverseSeparationInR0Units;
+            
+            tit = 'Power Over Circular Aperture';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in units of r0)';
+            labelZ = 'Power';
+            pwrStruct.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ);
+        end
+        function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
+            circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);
+            circ = repmat(circ, [1 1 size(irradiance, 3)]);
+            pwr = sum(sum(circ .* irradiance, 2), 1);
+        end
+    end
+    methods(Static)
+
     end
 end

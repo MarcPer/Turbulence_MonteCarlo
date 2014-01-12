@@ -58,6 +58,50 @@ classdef Calculator
                 'labelZ', labelZ);
             
         end
+        function pwrSlit = computePowerThroughCircularAperture(apertureDiameter, intProfile, simParams)
+        % computePowerThroughSlit returns power for each gamma and
+        % separation.
+        %
+        % SYNTAX:
+        % [pwrSlit, plotInfo] = computePowerThroughSlit(apertureDiameter,
+        % intProfile, simParams)
+        %
+        % OUTPUT:
+        % pwrSlit: Matrix for power through slit (i,j) -> [Separation, Gamma]
+        % plotInfo: Structure with plot title and labels
+        %
+        % INPUT:
+        % apertureDiameter: Scalar diameter of the circular aperture
+        % intProfile: Cell (indexed by Gamma), each element consisting of
+        % an array indexed as [profile row, profile column, separation]
+        % simParams: Instance of SimulationParameters
+            apertureDiamPx = round(apertureDiameter / ...
+                simParams.gridSpacingObservationPlane);
+            if (apertureDiamPx == 0)
+                fprintf('Aperture diameter set to smaller than pixel size.');
+                fprintf('Setting to 1 pixel = %3.3g m', simParams.gridSpacingObservationPlane);
+                apertureDiamPx = 1;
+            end
+            
+            pwrSlit = struct;
+            pwrSlit.data.columnParams = simParams.gammaStrength;
+            pwrSlit.data.rowParams = simParams.transverseSeparationInR0Units;
+            
+            if simParams.isFourthOrder
+                pwrSlit.data.values = Calculator.coincidenceSlitIntegratePx(intProfile, apertureDiamPx);
+            else
+                pwrSlit.data.values = Calculator.intensitySlitIntegratePx(intProfile, apertureDiamPx);
+            end
+            
+            tit = 'Power over circular aperture vs Turbulence Strength';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in r0)';
+            labelZ = 'Power through circular aperture';
+            pwrSlit.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ);
+            
+        end
     end
     
     methods(Static, Access = private)

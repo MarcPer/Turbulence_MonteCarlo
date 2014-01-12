@@ -89,18 +89,19 @@ classdef Exporter
             end
             
             pblProp = Util.getSetPublicProperties(simParams);
-            if ismember(re{1}{1}, pblProp)
-                fprintf(fidWriteTo, '%s: ', re{1}{1});
-                if length(simParams.(re{1}{1})) == 1
-                    fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1}));
-                else
-                    fprintf(fidWriteTo, '%3.3g, ', simParams.(re{1}{1})(1:end-1));
-                    fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1})(end));
-                end
-                fprintf(fidWriteTo, '\n');
-            else
+            if ~ismember(re{1}{1}, pblProp) 
                 fprintf(fidWriteTo, '%s\n', currentLine);
+                return;
             end
+            
+            fprintf(fidWriteTo, '%s: ', re{1}{1});
+            if length(simParams.(re{1}{1})) == 1
+                fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1}));
+            else
+                fprintf(fidWriteTo, '%3.3g, ', simParams.(re{1}{1})(1:end-1));
+                fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1})(end));
+            end
+            fprintf(fidWriteTo, '\n');
         end
         function saveSetPrivateProperties(fid, simParams)
             pvtProp = Util.getSetPrivateProperties(simParams);
