@@ -94,8 +94,6 @@ classdef SimulationParameters<handle
                 D1p = D1;
                 D2p = D2;
             else
-                D1 = D1 + max(obj.transverseSeparationInR0Units) * r0sw;
-%               D2 = D2; 
                 D1p = max(D1 + modelSensitivity*wvl*L ./ r0sw);
                 D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
             end
