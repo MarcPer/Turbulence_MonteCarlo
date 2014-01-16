@@ -63,7 +63,7 @@ classdef TurbulenceSimulator<handle
             
             nGamma = length(obj.simulationParameters.gammaStrength);
             intGamma = obj.fillIrradianceMetaData();
-            intGamma.values = cell(nGamma, 1);
+            intGamma.data.values = cell(nGamma, 1);
             
             for iGamma = 1 : nGamma
                 if obj.isAborted

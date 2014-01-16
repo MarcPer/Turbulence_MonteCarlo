@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 0;
+usrIn.enumShutdown = 2;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -35,8 +35,9 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-apertureRadius = simParams.waistAtObservationPlane/2;
-pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
+%apertureRadius = simParams.waistAtObservationPlane/2;
+%pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
+pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.\n');
