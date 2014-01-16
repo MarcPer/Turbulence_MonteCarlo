@@ -11,6 +11,7 @@ classdef SimulationParameters<handle
 		turbulenceRegionStartPosition;
 		turbulenceRegionEndPosition;
         slitWidth;
+        circularApertureRadius;
         % Turbulence Statistics
         gammaStrength;
         gammaCurrentIndex;

@@ -30,16 +30,27 @@ classdef Plotter<handle
             figure;
             plot(x,y, 'LineWidth', 2);
             grid on;
-            if isstruct(data)
-                if isfield(data.info,'title')
-                    title(data.info.title);
-                end
-                if isfield(data.info,'labelColumn')
-                    xlabel(data.info.labelColumn);
-                end
-                if isfield(data.info,'labelZ')
-                    ylabel(data.info.labelZ);
-                end
+            Plotter.drawPlotInformation(data);
+        end
+        function drawPlotInformation(data)
+            if ~isstruct(data)
+                return
+            end
+            
+            if isfield(data.info,'title')
+                str = data.info.title;
+                title(str);
+            end
+            if isfield(data.info,'labelColumn')
+                str = data.info.labelColumn;
+                xlabel(str);
+            end
+            if isfield(data.info,'labelZ')
+                str = data.info.labelZ;
+                ylabel(str);
+            end
+            if isfield(data.info,'labelLegend')
+                legend(data.info.labelLegend)
             end
         end
     end

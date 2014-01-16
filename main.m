@@ -35,7 +35,8 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma('Normalized', true);
+apertureRadius = simParams.waistAtObservationPlane/2;
+pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.\n');
@@ -50,7 +51,7 @@ close all;
 Plotter.plot2D(pwrGamma);
 
 % %% EXPORT RESULTS (only if simulation was completed)
-Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, simParams);
+Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
  
 % %% SHUTDOWN COMPUTER?
 usrIn.shutdownComputer;

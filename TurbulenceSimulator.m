@@ -3,13 +3,13 @@ classdef TurbulenceSimulator<handle
     % Includes a method to average over many realizations and perform
     % various operations on the screens (e.g. inversion and displacement)
     properties (Access = private)
-        simulationParameters;
         numberOfTransverseSeparations;
         phaseScreenProfiles;
         abortButtonHandle;
     end
     
     properties (SetAccess = private, GetAccess = public)
+        simulationParameters;
         isAborted;
         isNormalized;
     end
@@ -78,13 +78,15 @@ classdef TurbulenceSimulator<handle
                 end
             end
         end
-        function pwrGamma = getPowerOnCircularApertureForEachGamma(obj,varargin)
+        function pwrGamma = getPowerOnCircularApertureForEachGamma(obj,apertureRadius,varargin)
             % Returns cell{idxGamma} = pwr(separationIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
             obj.isNormalized = false;
             if isfield(inParams,'Normalized')
                 obj.isNormalized = inParams.Normalized;
             end
+            
+            obj.simulationParameters.circularApertureRadius = apertureRadius;
             
             nGamma = length(obj.simulationParameters.gammaStrength);
             nSep = obj.numberOfTransverseSeparations;
@@ -128,6 +130,7 @@ classdef TurbulenceSimulator<handle
         end
         function pwr = getPowerOnCircularApertureAveragedOverRealizations(obj)
             obj.abortButtonHandle = UserInput.createWaitBar;
+            apertureRadius = obj.simulationParameters.circularApertureRadius;
             try
                 nSep = obj.numberOfTransverseSeparations;
                 nRe = obj.getNumberOfRealizations;
@@ -146,7 +149,7 @@ classdef TurbulenceSimulator<handle
                         intensitySingleRealization = Util.normalize(intensitySingleRealization);
                     end
                     pwrSingleRealization = obj.getPowerOverCircularAperture(intensitySingleRealization, ...
-                        min(obj.simulationParameters.regionOfInterestAtObservationPlane));
+                        apertureRadius);
                     pwr = pwr + pwrSingleRealization(:);
                     UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
                 end
@@ -215,14 +218,22 @@ classdef TurbulenceSimulator<handle
             labelColumn = '\gamma';
             labelRow = 'Separation (in units of r0)';
             labelZ = 'Power';
+            labelLegend = obj.buildLegendCell();
             pwrStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ);
+                'labelZ', labelZ, 'labelLegend', labelLegend);
         end
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
             circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);
             circ = repmat(circ, [1 1 size(irradiance, 3)]);
             pwr = sum(sum(circ .* irradiance, 2), 1);
+        end
+        function leg = buildLegendCell(obj)
+            sep = obj.simulationParameters.transverseSeparationInR0Units;
+            leg = cell(1, length(sep));
+            for i = 1 : length(leg)
+                leg{i} = sprintf('%2.2g r0',sep(i));
+            end
         end
     end
     methods(Static)
