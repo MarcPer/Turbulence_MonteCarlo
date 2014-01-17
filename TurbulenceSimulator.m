@@ -63,7 +63,7 @@ classdef TurbulenceSimulator<handle
             
             nGamma = length(obj.simulationParameters.gammaStrength);
             intGamma = obj.fillIrradianceMetaData();
-            intGamma.data.values = cell(nGamma, 1);
+            intGamma.values = cell(nGamma, 1);
             
             for iGamma = 1 : nGamma
                 if obj.isAborted
@@ -74,12 +74,12 @@ classdef TurbulenceSimulator<handle
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
                 intGamma.values{iGamma} = obj.getAverageIrradianceOverRealizations();
                 if obj.isNormalized
-                    intGamma.values{iGamma} = Util.normalize(intGamma{iGamma});
+                    intGamma.values{iGamma} = Util.normalize(intGamma.values{iGamma});
                 end
             end
         end
         function pwrGamma = getPowerOnCircularApertureForEachGamma(obj,apertureRadius,varargin)
-            % Returns cell{idxGamma} = pwr(separationIndex)
+            % Returns pwr(separationIndex,gammaIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
             obj.isNormalized = false;
             if isfield(inParams,'Normalized')
@@ -91,7 +91,7 @@ classdef TurbulenceSimulator<handle
             nGamma = length(obj.simulationParameters.gammaStrength);
             nSep = obj.numberOfTransverseSeparations;
             pwrGamma = obj.fillCircularApertureMetaData();
-            pwrGamma.data.values = zeros(nSep,nGamma);
+            pwrGamma.values = zeros(nSep,nGamma);
             
             for iGamma = 1 : nGamma
                 if obj.isAborted
@@ -100,7 +100,7 @@ classdef TurbulenceSimulator<handle
                 UserInput.printOutProgress('Turbulence strength', ...
                     iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
-                pwrGamma.data.values(:,iGamma) = obj.getPowerOnCircularApertureAveragedOverRealizations();
+                pwrGamma.values(:,iGamma) = obj.getPowerOnCircularApertureAveragedOverRealizations();
             end
             
         end
@@ -167,8 +167,8 @@ classdef TurbulenceSimulator<handle
         function irrStruct = fillIrradianceMetaData(obj)
             irrStruct = struct;
             simParams = obj.simulationParameters;
-            irrStruct.data.columnParams = simParams.gammaStrength;
-            irrStruct.data.rowParams = simParams.transverseSeparationInR0Units;
+            irrStruct.columnParams = simParams.gammaStrength;
+            irrStruct.rowParams = simParams.transverseSeparationInR0Units;
             
             tit = 'Irradiance Profile';
             labelColumn = '\gamma';
@@ -211,8 +211,8 @@ classdef TurbulenceSimulator<handle
         function pwrStruct = fillCircularApertureMetaData(obj)
             pwrStruct = struct;
             simParams = obj.simulationParameters;
-            pwrStruct.data.columnParams = simParams.gammaStrength;
-            pwrStruct.data.rowParams = simParams.transverseSeparationInR0Units;
+            pwrStruct.columnParams = simParams.gammaStrength;
+            pwrStruct.rowParams = simParams.transverseSeparationInR0Units;
             
             tit = 'Power Over Circular Aperture';
             labelColumn = '\gamma';

@@ -6,23 +6,16 @@ classdef Exporter
     
     methods(Static)
         function exportToDisk(ioPaths,data,userInput,simParams)
-            filePath = ioPaths.getExportPath;
-            if ~exist(filePath, 'dir')
-                mkdir(filePath)
-            end           
-            fileName = ioPaths.getExportFileName;
-            fileName = fullfile(filePath, fileName);
-            fid = fopen(fileName, 'w');
-            if (fid == -1)
-                error('exporter:fileOpen', 'Could not open %s.', fileName);
-            end
+            fileName = Exporter.getFullFilename(ioPaths, 'dat');
+            fid = Exporter.getFileId(fileName);
             try
                 Exporter.writeSimulationType(fid,userInput);
                 Exporter.saveHeader(fid,data);
-                Exporter.saveData(fid,data);
+                Exporter.saveDataArray(fid,data);
                 Exporter.saveTimeStamp(fid);
                 Exporter.saveParametersFromFile(fid,ioPaths.inputParametersFileName,simParams);
                 Exporter.saveSetPrivateProperties(fid, simParams);
+                Exporter.saveFigure(ioPaths,data);
             catch exception
                 fclose(fid);
                 rethrow(exception);
@@ -51,11 +44,14 @@ classdef Exporter
             fprintf(fid, 'Column: %s\n', data.info.labelColumn);
             fprintf(fid, 'Value: %s\n\n', data.info.labelZ);
         end
-        function saveData(fid, data)
+        function saveDataArray(fid, data)
+            if iscell(data.values)
+               return; 
+            end
             fprintf(fid, 'r\\c');
-            fprintf(fid, '\t%3.3g', data.data.columnParams);
+            fprintf(fid, '\t%3.3g', data.columnParams);
             fprintf(fid, '\n');
-            dataToWrite = [data.data.rowParams', data.data.values];
+            dataToWrite = [data.rowParams', data.values];
             for ln = 1 : size(dataToWrite, 1)
                 fprintf(fid, '%3.3g\t', dataToWrite(ln,:));
                 fprintf(fid, '\n');
@@ -118,6 +114,27 @@ classdef Exporter
                     fprintf(fid, '%3.3g', simParams.(pvtProp{p})(end));
                 end
                 fprintf(fid, '\n');
+            end
+        end
+        function saveFigure(ioPaths,data)
+            if ~iscell(data.values)
+                return;
+            end
+            filename = Exporter.getFullFilename(ioPaths,'tiff');
+            saveas(gcf,filename);
+        end
+        function fileName = getFullFilename(ioPaths, ext)
+            filePath = ioPaths.getExportPath;
+            if ~exist(filePath, 'dir')
+                mkdir(filePath)
+            end           
+            fileName = ioPaths.getExportFileName(ext);
+            fileName = fullfile(filePath, fileName);
+        end
+        function fid = getFileId(fileName)
+            fid = fopen(fileName, 'w');
+            if (fid == -1)
+                error('exporter:fileOpen', 'Could not open %s.', fileName);
             end
         end
     end

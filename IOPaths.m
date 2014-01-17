@@ -26,16 +26,21 @@ classdef IOPaths<handle
            dt =  datestr(date, 'yyyy-mm-dd');
            expPath = fullfile(io.rootExportFolder,dt);
         end
-        function expFileName = getExportFileName(io)
+        function expFileName = getExportFileName(io,varargin)
+            ext = 'dat';
+            if ~isempty(varargin)
+                ext = varargin{1};
+            end
+            
             dt = datestr(date, 'yyyy-mm-dd');
             tm = datestr(clock, 'HHMMSS');
-            expFileName = [dt, '_SimData_', tm, '.dat'];
+            expFileName = [dt, '_SimData_', tm, '.', ext];
             
             if exist(io.getExportPath, 'dir')
                 files = io.getExportedFiles;
                 fn = 0;
                 if (ismember(expFileName,files))
-                    fn = uigetfile(fullfile(io.getExportPath,'*.dat'));
+                    fn = uigetfile(fullfile(io.getExportPath,['*.',ext]));
                 end
                 if fn
                     expFileName = fn;
@@ -46,7 +51,7 @@ classdef IOPaths<handle
             fileName = 'inputParameters.dat';
             fileName = uigetfile(fileName);
             if (fileName == 0)
-                return;
+                error('IOPaths:noInputFile', 'No input parameters file selected');
             end
             io.inputParametersFileName = fileName;
             fid = fopen(fileName);

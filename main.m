@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -35,9 +35,15 @@ close all; clear isAbort;
 turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
-%apertureRadius = simParams.waistAtObservationPlane/2;
-%pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
-pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
+try
+    apertureRadius = simParams.waistAtObservationPlane/2;
+    pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
+    %pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
+catch exception
+    % %% SHUTDOWN COMPUTER?
+    usrIn.shutdownComputer;
+    rethrow(exception);
+end
 
 if turbSimulator.isAborted
     fprintf('Simulation aborted.\n');
@@ -48,11 +54,16 @@ end
 
 % Beam transverse profiles at observation plane ('measured gammas only')
 close all;
-% Plotter.plotIntensityProfilesForEachGamma(simParams.gammaStrength, intProfileGamma);
-Plotter.plot2D(pwrGamma);
 
-% %% EXPORT RESULTS (only if simulation was completed)
-Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
- 
-% %% SHUTDOWN COMPUTER?
+try
+    % Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
+    Plotter.plot2D(pwrGamma)
+    
+    % EXPORT RESULTS (only if simulation was completed)
+    Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
+catch exception
+    % SHUTDOWN COMPUTER?
+    usrIn.shutdownComputer;
+    rethrow(exception);
+end
 usrIn.shutdownComputer;

@@ -9,14 +9,14 @@ classdef Plotter<handle
         function plotIntensityProfilesForEachGamma(data)
             figure;
             set(gcf, 'Units', 'normalized', 'Position', [0.625 0.28 0.365 0.61]);
-            row = data.data.rowParams;
-            col = data.data.columnParams;
+            row = data.rowParams;       % Separation
+            col = data.columnParams;    % Gamma
             
-            for iCol = 1 : length(col)
-                for iRow = 1 : length(row)
-                    i = 3*(iCol-1)+iRow;
+            for iRow = 1 : length(row)
+                for iCol = 1 : length(col)
+                    i = 3*(iRow-1)+iCol;
                     subplot( length(row), length(col), i);
-                    imagesc(data.data.values{iCol}(:, :, iRow));
+                    imagesc(data.values{iCol}(:, :, iRow));
                     axis off;
                     str = sprintf('gamma = %2.2g um, sep = %2.2g r0', col(iCol), row(iRow));
                     title(str);
@@ -25,8 +25,8 @@ classdef Plotter<handle
         end
         function plot2D(data)
             if isstruct(data)
-                x = data.data.columnParams;
-                y = data.data.values;
+                x = data.columnParams;
+                y = data.values;
             else
                 y = data;
                 x = 1 : length(data);
