@@ -32,7 +32,7 @@ classdef Exporter
                 isFourthOrderString = 'Second-order';
             end
             if userInput.isInverted
-                isInvertedString = 'with source and observation plane inversion';
+                isInvertedString = 'with inversion';
             else
                 isInvertedString = 'without inversion';
             end

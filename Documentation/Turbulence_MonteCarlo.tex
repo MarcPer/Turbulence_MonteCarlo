@@ -1,0 +1,82 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb,multirow,indentfirst,graphicx}
+
+\newcommand{\inner}[2]{\ensuremath{\left( #1 \, , \, #2 \right)}}
+\newcommand{\classoption}[1]{\texttt{#1}}
+\newcommand{\macro}[1]{\texttt{\textbackslash#1}}
+\newcommand{\m}[1]{\macro{#1}}
+\newcommand{\env}[1]{\texttt{#1}}
+\newcommand{\abs}[1]{\ensuremath{\left| #1 \right|}}
+\newcommand{\media}[1]{\ensuremath{\big\langle #1 \big\rangle}}
+\newcommand{\vect}[1]{\ensuremath{\boldsymbol{\mathrm{#1}}}}
+\newcommand{\sinc}[1]{\ensuremath{\mathrm{sinc}\, #1}}
+\newcommand{\ket}[1]{\ensuremath{|#1\rangle}}
+\newcommand{\bra}[1]{\ensuremath{\langle #1|}}
+\newcommand{\braket}[2]{\langle #1|#2\rangle}
+\newcommand{\ave}[1]{\langle #1\rangle}
+
+
+\title{Turbulence Monte Carlo}
+\author{M. V. da Cunha Pereira}
+\date{\today}
+
+\begin{document}
+  \maketitle 
+\begin{abstract}
+This document describes some of the theory behind simulations performed in this project.
+\end{abstract}
+
+\section{From Fourth to Second-Order Simulation}
+Performing simulations for quantities that are fourth-order in field is a formidable task when propagation under atmospheric turbulence is considered, so we try to reframe the model in terms of equivalent second-order beam propagation. This can be done for special cases detailed below, using, for the phase screens that emulate turbulent refractive index fields, a modified 'effective field'.
+
+\subsection{Delta Correlation in Near Field}
+We first consider a special case in which the fourth-order beam is delta correlated in the near-field, so that on the source-plane it has the form
+\begin{align}
+E_0(\rho_1^\prime, \rho_2^\prime) = E_p\left(\frac{\rho_1^\prime\pm \rho_2^\prime}{2}\right) &V_a(\rho_1^\prime\mp \rho_2^\prime) \hspace{1cm} \\
+&\mbox{, where } V_a(\rho) = \delta^2(\rho-a) \, . \notag
+\end{align}
+
+Top and bottom sign refer to the case where there is and isn't a coordinate inversion scheme in place. We consider the former for concreteness and as it corresponds to the more interesting case. Hence its propagation reads:
+\begin{align}
+E_a(\rho_1,\rho_2) &= \iint E_p\left(\frac{\rho_1^\prime-\rho_2^\prime}{2}\right) V_a(\rho_1^\prime+\rho_2^\prime) h(\rho_1,\rho_1^\prime) h(\rho_2, \rho_2^\prime) \; d^2\rho_1^\prime d^2\rho_2^\prime \notag \\
+&= \int E_p\left(\rho_1^\prime+\frac{a}{2}\right) h(\rho_1,\rho_1^\prime) h(\rho_2, -\rho_1^\prime+a) \; d^2\rho_1^\prime \,  \notag \\
+&= \int E_p(\rho^\prime)h\left(\rho_1, \rho^\prime+\frac{a}{2}\right) h\left(\rho_2, -\rho^\prime+\frac{a}{2}\right) \;  d^2\rho^\prime.
+\end{align}
+The propagators $h(x,y)$ can be split in the following form:
+\begin{align}
+h(x,y) = &h_0(x,y)\exp{\left[ \psi(x,y) \right]} \\
+& \mbox{, where } h_0(x,y) \propto \exp{\left[\frac{ik(x-y)^2}{2z}\right]} \label{eq_vaccuum-propagator}\; .
+\end{align}
+The term $h_0$ is the usual vaccuum propagator, while $\psi$, which describes the contribution from refractive index turbulence, is written
+\begin{align}
+\psi(\rho,\rho^\prime) \propto \int_0^L dz^\prime &\int d^2\rho'' \frac{n_1(\rho'',z')}{z'(L-z')} \notag \\
+& \times \exp{ \left\{ \frac{ik}{2} \left[ \frac{(\rho-\rho'')^2}{L-z'} + \frac{(\rho''-\rho')^2}{z'} - \frac{(\rho-\rho')^2}{L}\right] \right\}} \; .
+\end{align}
+Close inspection of \eqref{eq_vaccuum-propagator} reveals that
+\begin{align}
+h_0(\rho_1,\rho'+a/2) & = h_0(\rho_1-a/2,\rho') \\
+h_0(\rho_2,-\rho'+a/2)& = h_0(-\rho_2+a/2,\rho') \; .
+\end{align}
+As for the contribution from atmospheric turbulence, one can see that:
+\begin{align}
+\psi\left(\rho_1,\rho^\prime+\frac{a}{2}\right) &\propto \int_0^L dz^\prime \int d^2 \rho^{\prime\prime} \frac{n_1(\rho^{\prime\prime},z^\prime)}{z^\prime (L-z^\prime)} \ldots \notag \\
+& \hspace{1cm} \times \exp{\left\{\frac{ik}{2}\left[ \frac{(\rho_1-\rho^{\prime\prime})^2}{L-z^\prime} + \frac{\left(\rho^{\prime\prime}-\rho^\prime-\frac{a}{2}\right)^2}{z^\prime} - \frac{\left(\rho_1 -\rho^\prime -\frac{a}{2}\right)^2}{L}\right]\right\}} \notag \\
+&=\int_0^L dz^\prime \int d^2 \tau \frac{n_1\left(\tau+\frac{a}{2},z^\prime\right)}{z^\prime (L-z^\prime)} \ldots \notag \\
+& \hspace{1cm} \times \exp{\left\{\frac{ik}{2}\left[ \frac{(\rho_1- \frac{a}{2}-\tau)^2}{L-z^\prime} + \frac{\left(\tau-\rho^\prime\right)^2}{z^\prime} - \frac{\left(\rho_1 -\frac{a}{2} -\rho^\prime\right)^2}{L}\right]\right\}} \; , 
+\end{align}
+that is, it corresponds to $\psi\left(\rho_1-\frac{a}{2},\rho^\prime\right)$ with an effective refractive index $n_{eff}(\rho^{\prime\prime})=n_1\left(\rho^{\prime\prime}+\frac{a}{2},z^\prime\right)$. Equivalently, we have
+\begin{align}
+\psi\left(\rho_2,-\rho^\prime+\frac{a}{2}\right) &\propto \int_0^L dz^\prime \int d^2 \rho^{\prime\prime} \frac{n_1(\rho^{\prime\prime},z^\prime)}{z^\prime (L-z^\prime)} \ldots \notag \\
+& \hspace{1cm} \times \exp{\left\{\frac{ik}{2}\left[ \frac{(\rho_2-\rho^{\prime\prime})^2}{L-z^\prime} + \frac{\left(\rho^{\prime\prime}+\rho^\prime-\frac{a}{2}\right)^2}{z^\prime} - \frac{\left(\rho_2 +\rho^\prime -\frac{a}{2}\right)^2}{L}\right]\right\}} \notag \\
+&=\int_0^L dz^\prime \int d^2 \tau \frac{n_1\left(-\tau+\frac{a}{2},z^\prime\right)}{z^\prime (L-z^\prime)} \ldots \notag \\
+& \hspace{1cm} \times \exp{\left\{\frac{ik}{2}\left[ \frac{(\rho_2- \frac{a}{2}+\tau)^2}{L-z^\prime} + \frac{\left(\rho^\prime-\tau\right)^2}{z^\prime} - \frac{\left(\rho_2 -\frac{a}{2} +\rho^\prime\right)^2}{L}\right]\right\}} \; , 
+\end{align}
+corresponding to $\psi\left(-\rho_2+\frac{a}{2},\rho^\prime\right)$ with an effective refractive index $n_{eff}(\rho^{\prime\prime})=n_1\left(-\rho^{\prime\prime}+\frac{a}{2},z^\prime\right)$.
+
+If we choose detectors $1$ and $2$ to be positioned at $\rho_1=\rho+\frac{a}{2}$ and $\rho_2=-\rho+\frac{a}{2}$, by putting the above equations together we see that both propagators $h$ become identical except for the effective refractive indexes. In this case the propagated two-photon amplitude $E_a\left(\rho+\frac{a}{2}, -\rho+\frac{a}{2}\right)$ turns out to be formally equivalent to a second-order beam with the pump profile and wavenumber (that is, $k_p=2k$) propagating in a medium with refractive index given by
+\begin{equation}
+n_p(\rho^{\prime\prime},z^\prime)= n_1\left(\rho^{\prime\prime}+\frac{a}{2}, z^\prime\right) + n_1\left(-\rho^{\prime\prime}+\frac{a}{2},z^\prime\right) \; .
+\end{equation}
+
+\end{document}
