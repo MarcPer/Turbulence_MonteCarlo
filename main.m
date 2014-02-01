@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 0;
+usrIn.enumShutdown = 2;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -56,7 +56,7 @@ end
 close all;
 
 try
-    % Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
+    %Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
     Plotter.plot2D(pwrGamma)
     
     % EXPORT RESULTS (only if simulation was completed)
