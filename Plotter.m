@@ -31,6 +31,9 @@ classdef Plotter<handle
                 y = data;
                 x = 1 : length(data);
             end
+            if length(y) < 2
+                return;
+            end
             figure;
             plot(x,y, 'LineWidth', 2);
             grid on;

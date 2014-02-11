@@ -9,6 +9,7 @@ classdef Exporter
             fileName = Exporter.getFullFilename(ioPaths, 'dat');
             fid = Exporter.getFileId(fileName);
             try
+                Exporter.writeTitle(fid,data);
                 Exporter.writeSimulationType(fid,userInput);
                 Exporter.saveHeader(fid,data);
                 Exporter.saveDataArray(fid,data);
@@ -25,6 +26,9 @@ classdef Exporter
     end
     
     methods(Static, Access = private)
+        function writeTitle(fid, data)
+            fprintf(fid,'%s\n', data.info.title);
+        end
         function writeSimulationType(fid, userInput)
             if userInput.isFourthOrder
                 isFourthOrderString = 'Fourth-order';
@@ -49,7 +53,7 @@ classdef Exporter
                return; 
             end
             fprintf(fid, 'r\\c');
-            fprintf(fid, '\t%3.3g', data.columnParams);
+            fprintf(fid, '\t%4.3g', data.columnParams);
             fprintf(fid, '\n');
             dataToWrite = [data.rowParams', data.values];
             for ln = 1 : size(dataToWrite, 1)
@@ -92,10 +96,10 @@ classdef Exporter
             
             fprintf(fidWriteTo, '%s: ', re{1}{1});
             if length(simParams.(re{1}{1})) == 1
-                fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1}));
+                fprintf(fidWriteTo, '%4.3g', simParams.(re{1}{1}));
             else
-                fprintf(fidWriteTo, '%3.3g, ', simParams.(re{1}{1})(1:end-1));
-                fprintf(fidWriteTo, '%3.3g', simParams.(re{1}{1})(end));
+                fprintf(fidWriteTo, '%4.3g, ', simParams.(re{1}{1})(1:end-1));
+                fprintf(fidWriteTo, '%4.3g', simParams.(re{1}{1})(end));
             end
             fprintf(fidWriteTo, '\n');
         end
@@ -108,10 +112,10 @@ classdef Exporter
             for p = 1 : length(pvtProp)
                  fprintf(fid, '%s: ', pvtProp{p});
                 if length(simParams.(pvtProp{p})) == 1
-                    fprintf(fid, '%3.3g', simParams.(pvtProp{p}));
+                    fprintf(fid, '%4.3g', simParams.(pvtProp{p}));
                 else
-                    fprintf(fid, '%3.3g, ', simParams.(pvtProp{p})(1:end-1));
-                    fprintf(fid, '%3.3g', simParams.(pvtProp{p})(end));
+                    fprintf(fid, '%4.3g, ', simParams.(pvtProp{p})(1:end-1));
+                    fprintf(fid, '%4.3g', simParams.(pvtProp{p})(end));
                 end
                 fprintf(fid, '\n');
             end
@@ -123,12 +127,12 @@ classdef Exporter
             filename = Exporter.getFullFilename(ioPaths,'tiff');
             saveas(gcf,filename);
         end
-        function fileName = getFullFilename(ioPaths, ext)
+        function fileName = getFullFilename(ioPaths, extension)
             filePath = ioPaths.getExportPath;
             if ~exist(filePath, 'dir')
                 mkdir(filePath)
             end           
-            fileName = ioPaths.getExportFileName(ext);
+            fileName = ioPaths.getExportFileName(extension);
             fileName = fullfile(filePath, fileName);
         end
         function fid = getFileId(fileName)

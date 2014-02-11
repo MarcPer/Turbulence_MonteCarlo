@@ -48,8 +48,9 @@ classdef IOPaths<handle
             end
         end
         function fData = openParametersFile(io)
-            fileName = 'inputParameters.dat';
+            fileName = fullfile('inputParameters', 'inputParameters.dat');
             fileName = uigetfile(fileName);
+            fileName = fullfile('inputParameters', fileName);
             if (fileName == 0)
                 error('IOPaths:noInputFile', 'No input parameters file selected');
             end

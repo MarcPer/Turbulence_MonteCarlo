@@ -19,6 +19,7 @@ classdef SimulationParameters<handle
         innerScale;
         % Beam
         wavelength;
+        waistAtSourcePlane;         % e-2 intensity radius - User should specify only one waist
         waistAtObservationPlane;    % e-2 intensity radius
         % Simulation
         numberOfRealizations;
@@ -31,9 +32,10 @@ classdef SimulationParameters<handle
     properties(GetAccess = public, SetAccess = private)
 		% DERIVED PARAMETERS
 		waveNumber;
+        isWaistAtSourcePlane;
 		planePositions;
 		gridSpacingVector;
-		friedCoherenceRadiusMatrix; %{i,j} -> Turb. strength, Prop. plane
+		friedCoherenceRadiusMatrix;   % {i,j} -> Turb. strength, Prop. plane
         totalFriedCoherenceRadiusByStrength;
         regionOfInterestAtSourcePlane;
         regionOfInterestAtObservationPlane;
@@ -49,6 +51,7 @@ classdef SimulationParameters<handle
            simParams.checkIfFourthOrderAndInverted(varargin);
            fData = ioPath.openParametersFile();
            simParams.readParameters(fData);
+           simParams.checkConflictingInputParameters;
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
         end
@@ -182,6 +185,20 @@ classdef SimulationParameters<handle
                 end
             end
         end
+        function checkConflictingInputParameters(obj)
+            obj.checkIfTwoWaists();
+        end
+        function checkIfTwoWaists(obj)
+            if (~isnan(obj.waistAtObservationPlane) && ~isnan(obj.waistAtSourcePlane))
+                error('simParams:twoWaists', 'Both waistAtSourcePlane and waistAtObservationPlane were given as input parameters. It should be one or the other.')
+            end
+
+            if isnan(obj.waistAtObservationPlane)
+                obj.isWaistAtSourcePlane = true;
+            else
+                obj.isWaistAtSourcePlane = false;
+            end
+        end
         function setDefaultValueForBlankParameters(obj)
             z0 = obj.turbulenceRegionStartPosition;
             z1 = obj.turbulenceRegionEndPosition;
@@ -203,21 +220,46 @@ classdef SimulationParameters<handle
            npl = obj.numberOfPhasePlanes;
            delta1 = obj.gridSpacingSourcePlane;
            deltan = obj.gridSpacingObservationPlane;
-           wn = obj.waistAtObservationPlane;
+           [w1, wn] = obj.getBeamWidthsAtSourceAndObservationPlanes;
+           obj.waistAtSourcePlane = w1;
+           obj.waistAtObservationPlane = wn;
            
            obj.waveNumber =  2*pi/wvl;
-           k = obj.waveNumber;
            obj.planePositions = linspace(0, L, npl);
            z = obj.planePositions;
            
-           obj.complexBeamParameter = -L -1i*k*wn^2/2;
+           obj.complexBeamParameter = obj.computeComplexParameterAtSourcePlane;
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
-           w1 = wn*sqrt(1 + 2*L/ (k*wn^2));
+           
            obj.regionOfInterestAtSourcePlane = 4*w1;
            obj.regionOfInterestAtObservationPlane = 4*wn;
            
            obj.computeFriedCoherenceRadiusMatrix();
+        end
+        function [w1, wn] = getBeamWidthsAtSourceAndObservationPlanes(obj)
+            k = 2*pi/obj.wavelength;
+            L = obj.propagationDistance;
+            
+            if obj.isWaistAtSourcePlane
+                w1 = obj.waistAtSourcePlane;
+                wn = w1 * sqrt(1 + (2*L/(k*w1^2)).^2);
+            else
+                wn = obj.waistAtObservationPlane;
+                w1 = wn * sqrt(1 + (2*L/(k*wn^2)).^2);
+            end
+        end
+        function q = computeComplexParameterAtSourcePlane(obj)
+            w1 = obj.waistAtSourcePlane;
+            wn = obj.waistAtObservationPlane;
+            k = obj.waveNumber;
+            L = obj.propagationDistance;
+
+            if obj.isWaistAtSourcePlane
+                q = -1i*k*w1^2/2;
+            else
+                q = -L -1i*k*wn^2/2;
+            end
         end
         function computeFriedCoherenceRadiusMatrix(obj)
             L = obj.propagationDistance;
@@ -226,12 +268,8 @@ classdef SimulationParameters<handle
             zmin = obj.turbulenceRegionStartPosition;
             zmax = obj.turbulenceRegionEndPosition;
             g = obj.gammaStrength';
-            if (obj.isFourthOrder)
-                k = obj.waveNumber/2;
-            else
-                k = obj.waveNumber;
-            end
-            
+            k = obj.waveNumber;
+                        
             zmask = (z > zmin & z < zmax);
             ztmin_idx = find(zmask, 1, 'first');
             ztmax_idx = find(zmask, 1, 'last');

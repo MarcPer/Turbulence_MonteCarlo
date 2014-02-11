@@ -18,7 +18,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -36,8 +36,8 @@ turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
 try
-    apertureRadius = simParams.waistAtObservationPlane/2;
-    pwrGamma = turbSimulator.getPowerOnCircularApertureForEachGamma(apertureRadius,'Normalized', true);
+    apertureRadius = min(simParams.totalFriedCoherenceRadiusByStrength)/2;
+    [pwrGamma, scintIdx] = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
     %pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
 catch exception
     % %% SHUTDOWN COMPUTER?
@@ -57,10 +57,12 @@ close all;
 
 try
     %Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
-    Plotter.plot2D(pwrGamma)
+    %Plotter.plot2D(pwrGamma)
+    Plotter.plot2D(scintIdx);
     
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
+    %Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
+    Exporter.exportToDisk(ioPaths, scintIdx, usrIn, turbSimulator.simulationParameters);
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
