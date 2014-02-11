@@ -200,19 +200,16 @@ classdef SimulationParameters<handle
             end
         end
         function setDefaultValueForBlankParameters(obj)
-            z0 = obj.turbulenceRegionStartPosition;
-            z1 = obj.turbulenceRegionEndPosition;
-            transvSep = obj.transverseSeparationInR0Units;
-            
-           if (isnan(z0) || isempty(z0))
-              obj.turbulenceRegionStartPosition = 0;
-           end
-           if (isnan(z1) || isempty(z1))
-              obj.turbulenceRegionEndPosition = obj.propagationDistance;
-           end
-           if (isempty(transvSep))
-               obj.transverseSeparationInR0Units = 0;
-           end
+            obj.setValueIfEmpty('turbulenceRegionStartPosition', 0);
+            obj.setValueIfEmpty('turbulenceRegionEndPosition', obj.propagationDistance);
+            obj.setValueIfEmpty('innerScale', 0);
+            obj.setValueIfEmpty('outerScale', Inf);
+            obj.setValueIfEmpty('transverseSeparationInR0Units', 0);
+        end
+        function setValueIfEmpty(obj, prop, value)
+            if (isnan(obj.(prop)) || isempty(obj.(prop)) )
+                obj.(prop) = value;
+            end
         end
         function computeDerivedQuantities(obj)
            wvl = obj.wavelength;

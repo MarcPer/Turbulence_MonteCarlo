@@ -14,7 +14,7 @@ wavelength: 1550e-9
 waistAtSourcePlane: 25e-2
 waistAtObservationPlane: 
 # Simulation
-numberOfRealizations: 5
+numberOfRealizations: 100
 transverseGridSize: 512
 gridSpacingSourcePlane: 0.0077
 gridSpacingObservationPlane: 0.0026
