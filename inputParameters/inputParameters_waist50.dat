@@ -15,8 +15,7 @@ waistAtSourcePlane: 5e-2
 waistAtObservationPlane: 
 # Simulation
 numberOfRealizations: 100
-(small but enough to give a qualitative picture)
-transverseGridSize: 512
+transverseGridSize: 256
 gridSpacingSourcePlane: 0.0077
 gridSpacingObservationPlane: 0.0047
 transverseSeparationInR0Units: 0

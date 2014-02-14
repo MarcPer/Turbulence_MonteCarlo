@@ -36,7 +36,7 @@ turbSimulator = TurbulenceSimulator(simParams);
 
 %% RUN SIMULATION
 try
-    apertureRadius = min(simParams.totalFriedCoherenceRadiusByStrength)/2;
+    apertureRadius = simParams.gridSpacingObservationPlane;
     [pwrGamma, scintIdx] = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
     %pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
 catch exception
