@@ -37,6 +37,7 @@ classdef SimulationParameters<handle
 		gridSpacingVector;
 		friedCoherenceRadiusMatrix;   % {i,j} -> Turb. strength, Prop. plane
         totalFriedCoherenceRadiusByStrength;
+        structureConstantSquared;
         regionOfInterestAtSourcePlane;
         regionOfInterestAtObservationPlane;
     end
@@ -233,6 +234,7 @@ classdef SimulationParameters<handle
            obj.regionOfInterestAtObservationPlane = 4*wn;
            
            obj.computeFriedCoherenceRadiusMatrix();
+           obj.computeStructureConstantSquared();
         end
         function [w1, wn] = getBeamWidthsAtSourceAndObservationPlanes(obj)
             k = 2*pi/obj.wavelength;
@@ -283,6 +285,12 @@ classdef SimulationParameters<handle
             aux_mat = repmat( (z .* zmask)/L,length(g),1);
             obj.totalFriedCoherenceRadiusByStrength = ...
                 sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
+        end
+        function computeStructureConstantSquared(obj)
+            L = obj.propagationDistance;
+            k = obj.waveNumber;
+            r0 = obj.totalFriedCoherenceRadiusByStrength;
+            obj.structureConstantSquared = 1/(k^2*L) * (1.435./r0).^(5/3);
         end
         function plotConstraint1(obj, params)
             L = obj.propagationDistance;
