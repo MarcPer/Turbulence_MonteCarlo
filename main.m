@@ -33,11 +33,12 @@ end
 close all; clear isAbort;
 
 turbSimulator = TurbulenceSimulator(simParams);
+clear simParams;
 
 %% RUN SIMULATION
 try
-    apertureRadius = simParams.gridSpacingObservationPlane;
-    [pwrGamma, scintIdx] = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
+    apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
+    pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
     %pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
 catch exception
     % %% SHUTDOWN COMPUTER?
@@ -58,11 +59,10 @@ close all;
 try
     %Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
     %Plotter.plot2D(pwrGamma)
-    Plotter.plot2D(scintIdx);
+    Plotter.plot2D(pwrAndSI{2});
     
     % EXPORT RESULTS (only if simulation was completed)
-    %Exporter.exportToDisk(ioPaths, pwrGamma, usrIn, turbSimulator.simulationParameters);
-    Exporter.exportToDisk(ioPaths, scintIdx, usrIn, turbSimulator.simulationParameters);
+    Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;

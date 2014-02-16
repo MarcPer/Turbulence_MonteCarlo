@@ -78,7 +78,7 @@ classdef TurbulenceSimulator<handle
                 end
             end
         end
-        function [pwrGamma, scintIdx] = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
+        function pwrAndSI = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
             % Returns pwr(separationIndex,gammaIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
             obj.isNormalized = false;
@@ -93,9 +93,11 @@ classdef TurbulenceSimulator<handle
 
             pwrGamma = obj.fillCircularApertureMetaData();
             pwrGamma.values = zeros(nSep,nGamma);
+            pwrGamma.params = obj.getSimulationParameters();
 
             scintIdx = obj.fillScintillationIndexOnCircularApertureMetaData();
             scintIdx.values = zeros(nSep,nGamma);
+            scintIdx.params = obj.getSimulationParameters();
             
             for iGamma = 1 : nGamma
                 if obj.isAborted
@@ -107,6 +109,8 @@ classdef TurbulenceSimulator<handle
                 [pwrGamma.values(:,iGamma), scintIdx.values(:,iGamma)] = ...
                     obj.getPowerOnCircularApertureAveragedOverRealizations();
             end
+
+            pwrAndSI = {pwrGamma, scintIdx};
         end
         function scintIdx = getScintillationIndexOnCircularApertureForEachGamma(obj,apertureRadius)
             obj.simulationParameters.circularApertureRadius = apertureRadius;
@@ -273,6 +277,12 @@ classdef TurbulenceSimulator<handle
             leg = cell(1, length(sep));
             for i = 1 : length(leg)
                 leg{i} = sprintf('%2.2g r0',sep(i));
+            end
+        end
+        function params = getSimulationParameters(obj)
+            simParams = fieldnames(obj.simulationParameters);
+            for p = 1 : numel(simParams)
+                params.(simParams{p}) = obj.simulationParameters.(simParams{p});
             end
         end
     end

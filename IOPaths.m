@@ -28,13 +28,17 @@ classdef IOPaths<handle
         end
         function expFileName = getExportFileName(io,varargin)
             ext = 'dat';
+            identifier = 'SimData';
             if ~isempty(varargin)
                 ext = varargin{1};
+                if (length(varargin) > 1)
+                    identifier = num2str(varargin{2});
+                end
             end
             
             dt = datestr(date, 'yyyy-mm-dd');
             tm = datestr(clock, 'HHMMSS');
-            expFileName = [dt, '_SimData_', tm, '.', ext];
+            expFileName = [dt, '_', identifier, '_', tm, '.', ext];
             
             if exist(io.getExportPath, 'dir')
                 files = io.getExportedFiles;

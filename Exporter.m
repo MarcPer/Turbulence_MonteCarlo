@@ -5,18 +5,26 @@ classdef Exporter
     end
     
     methods(Static)
-        function exportToDisk(ioPaths,data,userInput,simParams)
-            fileName = Exporter.getFullFilename(ioPaths, 'dat');
+        function exportToDisk(ioPaths,data,userInput,simParams,varargin)
+            if isempty(varargin)
+                fileName = Exporter.getFullFilename(ioPaths, 'dat');
+            else
+                fileName = Exporter.getFullFilename(ioPaths, 'dat', varargin{1});
+            end
             fid = Exporter.getFileId(fileName);
+
+            Exporter.saveMatlabFile(fileName, data);
             try
-                Exporter.writeTitle(fid,data);
-                Exporter.writeSimulationType(fid,userInput);
-                Exporter.saveHeader(fid,data);
-                Exporter.saveDataArray(fid,data);
+                for i = 1 : length(data)
+                    Exporter.writeTitle(fid, Exporter.getDataSet(data,i));
+                    Exporter.writeSimulationType(fid,userInput);
+                    Exporter.saveHeader(fid, Exporter.getDataSet(data,i));
+                    Exporter.saveDataArray(fid, Exporter.getDataSet(data,i));
+                    Exporter.saveFigure(ioPaths, Exporter.getDataSet(data,i));
+                end
                 Exporter.saveTimeStamp(fid);
                 Exporter.saveParametersFromFile(fid,ioPaths.inputParametersFileName,simParams);
                 Exporter.saveSetPrivateProperties(fid, simParams);
-                Exporter.saveFigure(ioPaths,data);
             catch exception
                 fclose(fid);
                 rethrow(exception);
@@ -26,6 +34,18 @@ classdef Exporter
     end
     
     methods(Static, Access = private)
+        function saveMatlabFile(fileName, data)
+            varString = inputname(2);
+            fileNameWithoutExtension = regexprep(fileName, '\.\w+$', '');
+            save(fileNameWithoutExtension, varString);
+        end
+        function dataSet = getDataSet(data, idx)
+            if ~iscell(data)
+                dataSet = data;
+                return;
+            end
+            dataSet = data{idx};
+        end
         function writeTitle(fid, data)
             fprintf(fid,'%s\n', data.info.title);
         end
@@ -60,6 +80,7 @@ classdef Exporter
                 fprintf(fid, '%3.3g\t', dataToWrite(ln,:));
                 fprintf(fid, '\n');
             end
+            fprintf(fid, '\n--------------------------------- \n');
         end
         function saveTimeStamp(fid)
             dt = datestr(date, 'yyyy-mm-dd');
@@ -127,12 +148,16 @@ classdef Exporter
             filename = Exporter.getFullFilename(ioPaths,'tiff');
             saveas(gcf,filename);
         end
-        function fileName = getFullFilename(ioPaths, extension)
+        function fileName = getFullFilename(ioPaths, extension, varargin)
             filePath = ioPaths.getExportPath;
             if ~exist(filePath, 'dir')
                 mkdir(filePath)
             end           
-            fileName = ioPaths.getExportFileName(extension);
+            if isempty(varargin)
+                fileName = ioPaths.getExportFileName(extension);
+            else
+                fileName = ioPaths.getExportFileName(extension, varargin{1});
+            end
             fileName = fullfile(filePath, fileName);
         end
         function fid = getFileId(fileName)
