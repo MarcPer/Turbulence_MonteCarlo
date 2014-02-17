@@ -52,9 +52,10 @@ classdef IOPaths<handle
             end
         end
         function fData = openParametersFile(io)
-            fileName = fullfile('inputParameters', 'inputParameters.dat');
+            inputFolder = fullfile(io.dropboxFolder, 'MATLAB', 'Turbulence_MonteCarlo', 'inputParameters');
+            fileName = fullfile(inputFolder, 'inputParameters.dat');
             fileName = uigetfile(fileName);
-            fileName = fullfile('inputParameters', fileName);
+            fileName = fullfile(inputFolder, fileName);
             if (fileName == 0)
                 error('IOPaths:noInputFile', 'No input parameters file selected');
             end

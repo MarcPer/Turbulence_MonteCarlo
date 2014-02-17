@@ -58,9 +58,9 @@ close all;
 
 try
     %Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
-    %Plotter.plot2D(pwrGamma)
+    Plotter.plot2D(pwrAndSI{1});
     Plotter.plot2D(pwrAndSI{2});
-    
+        
     % EXPORT RESULTS (only if simulation was completed)
     Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
 catch exception
