@@ -28,6 +28,9 @@ classdef TurbulenceSimulator<handle
             sg = obj.simulationParameters.getSuperGaussianFilter;
             sg = repmat(sg, [1, 1, obj.simulationParameters.numberOfPhasePlanes]);
             wvl = obj.simulationParameters.wavelength;
+            if obj.simulationParameters.isFourthOrder
+                wvl = wvl/2;
+            end
             z = obj.simulationParameters.planePositions;
             delta1 = obj.simulationParameters.gridSpacingSourcePlane;
             deltan = obj.simulationParameters.gridSpacingObservationPlane;
