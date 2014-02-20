@@ -24,7 +24,9 @@ classdef TurbulenceSimulator<handle
     end
     methods(Access = public)
         function outputField = propagate(obj, phScreen)
-            Uin = obj.simulationParameters.getInputField;
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+            outputField = zeros(Ny, Nx, numOrders);
             sg = obj.simulationParameters.getSuperGaussianFilter;
             sg = repmat(sg, [1, 1, obj.simulationParameters.numberOfPhasePlanes]);
             wvl = obj.simulationParameters.wavelength;
@@ -35,8 +37,11 @@ classdef TurbulenceSimulator<handle
             delta1 = obj.simulationParameters.gridSpacingSourcePlane;
             deltan = obj.simulationParameters.gridSpacingObservationPlane;
             
-            [~,~, outputField] = ang_spec_multi_prop(Uin, wvl, ...
-                delta1, deltan, z, sg.*exp(1i*phScreen));
+            for i = 1 : numOrders
+                Uin = obj.simulationParameters.getInputField(i);
+                [~,~, outputField(i)] = ang_spec_multi_prop(Uin, wvl, ...
+                    delta1, deltan, z, sg.*exp(1i*phScreen));
+            end
         end
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
@@ -110,29 +115,29 @@ classdef TurbulenceSimulator<handle
                     iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
                 [pwrGamma.values(:,iGamma), scintIdx.values(:,iGamma)] = ...
-                    obj.getPowerOnCircularApertureAveragedOverRealizations();
+                    obj.getPowerAnsSIOnCircularApertureAveragedOverRealizations();
             end
 
             pwrAndSI = {pwrGamma, scintIdx};
         end
-        function scintIdx = getScintillationIndexOnCircularApertureForEachGamma(obj,apertureRadius)
-            obj.simulationParameters.circularApertureRadius = apertureRadius;
-
+        function modeOverlap = getModeMatching(obj)
             nGamma = length(obj.simulationParameters.gammaStrength);
-            nSep = obj.numberOfTransverseSeparations;
-            scintIdx = obj.fillCircularApertureMetaData();
-            scintIdx.values = zeros(nSep,nGamma);
-            
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            modeOverlap = cell{nGamma,1};
+
             for iGamma = 1 : nGamma
                 if obj.isAborted
                     break;
                 end
-                UserInput.printOutProgress('Turbulence strength', ...
+                 UserInput.printOutProgress('Turbulence strength', ...
                     iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
-                scintIdx.values(:,iGamma) = obj.getPowerOnCircularApertureAveragedOverRealizations();
-            end
+                modeOverlap{iGamma} = obj.fillModeOverlapMetaData;
+                modeOverlap{iGamma}.values = zeros(numOrders);
+                modeOverlap{iGamma}.params = obj.getSimulationParameters;
 
+                %TODO - Perform simulation
+            end
         end
     end
     methods(Access = private)
@@ -158,7 +163,7 @@ classdef TurbulenceSimulator<handle
                 nRe = nReInput;
             end
         end
-        function [pwr, scintIdx] = getPowerOnCircularApertureAveragedOverRealizations(obj)
+        function [pwr, scintIdx] = getPowerAnsSIOnCircularApertureAveragedOverRealizations(obj)
             obj.abortButtonHandle = UserInput.createWaitBar;
             apertureRadius = obj.simulationParameters.circularApertureRadius;
             try
@@ -269,6 +274,22 @@ classdef TurbulenceSimulator<handle
             siStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
                 'labelZ', labelZ, 'labelLegend', labelLegend);
+        end
+        function mmStruct = fillModeOverlapMetaData(obj)
+            % TODO - Complete this
+            mmStruct = struct;
+            mmStruct.columnParams = obj.simulationParameters.gammaStrength;
+            mmStruct.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
+            
+            tit = 'Scintillation Index on Circular Aperture';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in units of r0)';
+            labelZ = 'SI';
+            labelLegend = obj.buildLegendCell();
+            mmStruct.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ, 'labelLegend', labelLegend);
+
         end
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
             circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);

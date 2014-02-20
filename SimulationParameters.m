@@ -21,6 +21,7 @@ classdef SimulationParameters<handle
         wavelength;
         waistAtSourcePlane;         % e-2 intensity radius - User should specify only one waist
         waistAtObservationPlane;    % e-2 intensity radius
+        hermiteGaussOrders;
         % Simulation
         numberOfRealizations;
         transverseGridSize;
@@ -63,11 +64,23 @@ classdef SimulationParameters<handle
             sg = exp(-(x1/(0.47*Nx*delta1)).^16 ... 
                 -(y1/(0.47*Ny*delta1)).^16);
         end
-        function Uin = getInputField(obj)
+        function Uin = getInputField(obj, varargin)
             [x1,y1] = obj.getMeshGridAtSourcePlane();
             qz = obj.complexBeamParameter;
             k = obj.waveNumber;
-            Uin = 1/qz*exp(1i*k/(2*qz)*(x1.^2+y1.^2)); 
+
+            Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
+
+            if isempty(varargin)
+                return;
+            end
+
+            if ~isfloat(varargin)
+                return;
+            end
+
+            [nx, ny] = obj.getHermiteGaussOrders(varargin);
+            Uin = HG(nx,qz,k,x1) .* HG(ny,qz,k,y1);
         end
         function [NxEff, NyEff] = getPhaseScreenGridSize(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
@@ -206,11 +219,10 @@ classdef SimulationParameters<handle
             obj.setValueIfEmpty('innerScale', 0);
             obj.setValueIfEmpty('outerScale', Inf);
             obj.setValueIfEmpty('transverseSeparationInR0Units', 0);
+            obj.setValueIfEmpty('hermiteGaussOrders', 0);
         end
         function setValueIfEmpty(obj, prop, value)
-            if (isnan(obj.(prop)) || isempty(obj.(prop)) )
-                obj.(prop) = value;
-            end
+            obj.(prop)(isnan(obj.(prop)) | isempty(obj.(prop))) = value;
         end
         function computeDerivedQuantities(obj)
            wvl = obj.wavelength;
@@ -434,6 +446,10 @@ classdef SimulationParameters<handle
                     'should be smaller than %3.2e]\n'], ...
                     max(delta), zmax);
             end
+        end
+        function [nx, ny] = getHermiteGaussOrders(num)
+            nx = floor(num/10);
+            ny = floor(num - nx);
         end
     end
 end

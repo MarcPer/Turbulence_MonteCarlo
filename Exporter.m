@@ -115,6 +115,12 @@ classdef Exporter
                 return;
             end
             
+            if (re{1}{1} == 'hermiteGaussOrder')
+                fprintf(fidWriteTo, '%02d', simParams.(re{1}{1}));
+                fprintf(fidWriteTo, '\n');
+                return;
+            end
+
             fprintf(fidWriteTo, '%s: ', re{1}{1});
             if length(simParams.(re{1}{1})) == 1
                 fprintf(fidWriteTo, '%4.3g', simParams.(re{1}{1}));
