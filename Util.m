@@ -208,5 +208,21 @@ classdef Util<handle
             end
         end
         
+        function ip = modeInnerProduct(A, B)
+            [a1, a2, a3] = size(A);
+            [b1, b2, b3] = size(B);
+
+            if (a1 ~= b1 || a2 ~= b2)
+                error('util:modeInnerProduct', 'Input arguments should be composed of matrices that are the same size.');
+            end
+            ip = zeros(a3,b3);
+
+            for ib = 1 : b3
+                for ia = 1 : a3
+                    ip(ia,ib) = sum(sum(conj(A(:,:,ia)) .* B(:,:,ib), 2), 1);
+                end
+            end
+        end
+
     end
 end

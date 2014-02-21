@@ -39,10 +39,11 @@ classdef TurbulenceSimulator<handle
             
             for i = 1 : numOrders
                 Uin = obj.simulationParameters.getInputField(i);
-                [~,~, outputField(i)] = ang_spec_multi_prop(Uin, wvl, ...
+                [~,~, outputField(:,:,i)] = ang_spec_multi_prop(Uin, wvl, ...
                     delta1, deltan, z, sg.*exp(1i*phScreen));
             end
         end
+
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
             phz = obj.inversionAndFourthOrderOperationsOnScreen();
@@ -55,12 +56,24 @@ classdef TurbulenceSimulator<handle
                 if obj.isAborted
                     break;
                 end
-                [deltaX, ~] = obj.simulationParameters.getTransverSeparationInPixels(iSep);
+                [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(iSep);
                 phScreen = Util.displace(phz,deltaX,0);
                 phScreen = Util.crop(phScreen, Nx, Ny);
                 fieldSep(:,:,iSep) = obj.propagate(phScreen);
             end
         end
+
+        function outMode = getFieldForEachMode(obj)
+            phz = obj.inversionAndFourthOrderOperationsOnScreen();
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+            
+            obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+            [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(1);
+            phScreen = Util.displace(phz,deltaX,0);
+            phScreen = Util.crop(phScreen, Nx, Ny);
+            outMode = obj.propagate(phScreen);
+        end
+
         function intGamma = getIrradianceForEachGamma(obj,varargin)
             % Returns cell{idxGamma} = int(Ny,Nx,separationIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
@@ -86,6 +99,7 @@ classdef TurbulenceSimulator<handle
                 end
             end
         end
+
         function pwrAndSI = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
             % Returns pwr(separationIndex,gammaIndex)
             inParams = Util.transformInputParametersIntoStructure(varargin);
@@ -120,26 +134,37 @@ classdef TurbulenceSimulator<handle
 
             pwrAndSI = {pwrGamma, scintIdx};
         end
-        function modeOverlap = getModeMatching(obj)
-            nGamma = length(obj.simulationParameters.gammaStrength);
-            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
-            modeOverlap = cell{nGamma,1};
 
-            for iGamma = 1 : nGamma
+        function modeOverlap = getModeMatching(obj)
+            obj.numberOfTransverseSeparations = 1;
+            nGamma = length(obj.simulationParameters.gammaStrength);
+            obj.setFreeSpaceConditions();
+            if  length(obj.simulationParameters.gammaStrength)<2
+                error('turbuSimulator:modeMatching', 'This simulation requires a non-zero turbulence strength as input parameter.');
+            end
+
+            modeOverlap = cell(nGamma-1,1);
+
+
+            fprintf('\nPropagating reference modes in free space...\t');
+            refModes = obj.propagate(0);
+            fprintf('Done\n');
+
+            for iGamma = 2 : nGamma
                 if obj.isAborted
                     break;
                 end
                  UserInput.printOutProgress('Turbulence strength', ...
-                    iGamma, nGamma);
+                    iGamma-1, nGamma-1);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
-                modeOverlap{iGamma} = obj.fillModeOverlapMetaData;
-                modeOverlap{iGamma}.values = zeros(numOrders);
-                modeOverlap{iGamma}.params = obj.getSimulationParameters;
+                modeOverlap{iGamma-1} = obj.fillModeOverlapMetaData;
+                modeOverlap{iGamma-1}.params = obj.getSimulationParameters;
 
-                %TODO - Perform simulation
+                modeOverlap{iGamma-1}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
             end
         end
     end
+
     methods(Access = private)
         function phScreen = inversionAndFourthOrderOperationsOnScreen(obj)
             phScreen = obj.phaseScreenProfiles;
@@ -153,6 +178,7 @@ classdef TurbulenceSimulator<handle
                 phScreen = 2*phScreen;
             end
         end
+
         function nRe = getNumberOfRealizations(obj)
             nReInput = obj.simulationParameters.numberOfRealizations;
             idxGamma = obj.simulationParameters.gammaCurrentIndex;
@@ -163,6 +189,7 @@ classdef TurbulenceSimulator<handle
                 nRe = nReInput;
             end
         end
+
         function [pwr, scintIdx] = getPowerAnsSIOnCircularApertureAveragedOverRealizations(obj)
             obj.abortButtonHandle = UserInput.createWaitBar;
             apertureRadius = obj.simulationParameters.circularApertureRadius;
@@ -202,6 +229,38 @@ classdef TurbulenceSimulator<handle
                 rethrow(exception);
             end
         end
+
+        function mm = getModeMatchingAveragedOverRealizations(obj,refModes)
+            obj.abortButtonHandle = UserInput.createWaitBar;
+
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            nRe = obj.getNumberOfRealizations;
+            mm = zeros(numOrders);
+
+            try
+                for iRe = 1 : nRe
+                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+                    if obj.isAborted
+                        break;
+                    end
+                    obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
+                    outputModes = obj.getFieldForEachMode();
+
+                    mm = mm + abs(Util.modeInnerProduct(refModes, outputModes)).^2;
+                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
+                end
+                delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
+                mm = mm / nRe;
+            catch exception
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
+                rethrow(exception);
+            end
+        end
+
         function irrStruct = fillIrradianceMetaData(obj)
             irrStruct = struct;
             simParams = obj.simulationParameters;
@@ -276,20 +335,20 @@ classdef TurbulenceSimulator<handle
                 'labelZ', labelZ, 'labelLegend', labelLegend);
         end
         function mmStruct = fillModeOverlapMetaData(obj)
-            % TODO - Complete this
             mmStruct = struct;
-            mmStruct.columnParams = obj.simulationParameters.gammaStrength;
-            mmStruct.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
+            mmStruct.columnParams = obj.simulationParameters.hermiteGaussOrders;
+            mmStruct.rowParams = obj.simulationParameters.hermiteGaussOrders;
             
-            tit = 'Scintillation Index on Circular Aperture';
-            labelColumn = '\gamma';
-            labelRow = 'Separation (in units of r0)';
-            labelZ = 'SI';
-            labelLegend = obj.buildLegendCell();
+            iGamma = obj.simulationParameters.gammaCurrentIndex;
+
+            tit = sprintf('Mode-Matching for Hermite-Gauss modes and gamma = %3.3g', ...
+                obj.simulationParameters.gammaStrength(iGamma));
+            labelColumn = 'Transmitted Mode';
+            labelRow = 'Reference Mode';
+            labelZ = 'Mode-Matching';
             mmStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'labelLegend', labelLegend);
-
+                'labelZ', labelZ);
         end
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
             circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);
@@ -308,6 +367,13 @@ classdef TurbulenceSimulator<handle
             for p = 1 : numel(simParams)
                 params.(simParams{p}) = obj.simulationParameters.(simParams{p});
             end
+        end
+        function setFreeSpaceConditions(obj)
+            if ~ismember(0, obj.simulationParameters.gammaStrength)
+                obj.simulationParameters.gammaStrength = ...
+                [0, obj.simulationParameters.gammaStrength];
+            end
+            obj.simulationParameters.gammaCurrentIndex = 1;
         end
     end
     methods(Static)

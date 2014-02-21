@@ -71,15 +71,18 @@ classdef SimulationParameters<handle
 
             Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
 
-            if isempty(varargin)
+            if isempty(varargin{1})
                 return;
             end
 
-            if ~isfloat(varargin)
+            if ~isfloat(varargin{1})
                 return;
             end
 
-            [nx, ny] = obj.getHermiteGaussOrders(varargin);
+            hgOrderXY = obj.hermiteGaussOrders;
+            fprintf('Raw order: %02d\n', hgOrderXY);
+            [nx, ny] = obj.getHermiteGaussOrders(hgOrderXY(varargin{1}));
+            fprintf('Retrieved Order: %02d\n', hgOrderXY(varargin{1}));
             Uin = HG(nx,qz,k,x1) .* HG(ny,qz,k,y1);
         end
         function [NxEff, NyEff] = getPhaseScreenGridSize(obj)
@@ -116,7 +119,7 @@ classdef SimulationParameters<handle
                 D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
             end
         end
-        function [deltaX, deltaY] = getTransverSeparationInPixels(obj, sepIndex)
+        function [deltaX, deltaY] = getTransverseSeparationInPixels(obj, sepIndex)
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
             r0sw = r0sw(obj.gammaCurrentIndex);

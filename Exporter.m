@@ -115,7 +115,7 @@ classdef Exporter
                 return;
             end
             
-            if (re{1}{1} == 'hermiteGaussOrder')
+            if (strcmpi(re{1}{1},'hermiteGaussOrder'))
                 fprintf(fidWriteTo, '%02d', simParams.(re{1}{1}));
                 fprintf(fidWriteTo, '\n');
                 return;

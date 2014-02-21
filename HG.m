@@ -15,7 +15,7 @@ w = abs(sqrt(2/imag(k/q)));
 
 
 y = mfun('H', n, sqrt(2).* x ./ w) .* exp(1i*k*x.^2/(2*q) + 1i*k*z );
-y = y ./ abs(sqrt(sum(y.^2)));
+y = y ./ abs(sqrt(sum(y(:).^2)));
 
 end
 
