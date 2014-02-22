@@ -5,7 +5,7 @@ classdef IOPaths<handle
        inputParametersFileName;
        rootExportFolder;
        importFolders = {'Numerical simulation of optical wave propagation', ...
-           'waitinput'};
+           'waitinput', 'hermite'};
     end
     
     methods (Access = public)

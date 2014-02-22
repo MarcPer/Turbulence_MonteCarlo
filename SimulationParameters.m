@@ -64,27 +64,52 @@ classdef SimulationParameters<handle
             sg = exp(-(x1/(0.47*Nx*delta1)).^16 ... 
                 -(y1/(0.47*Ny*delta1)).^16);
         end
+
         function Uin = getInputField(obj, varargin)
             [x1,y1] = obj.getMeshGridAtSourcePlane();
             qz = obj.complexBeamParameter;
             k = obj.waveNumber;
 
-            Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
 
-            if isempty(varargin{1})
+            if isempty(varargin)
+                Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
                 return;
             end
 
-            if ~isfloat(varargin{1})
+            n = varargin{1};
+            if ~isfloat(n)
+                Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
                 return;
             end
 
             hgOrderXY = obj.hermiteGaussOrders;
-            fprintf('Raw order: %02d\n', hgOrderXY);
-            [nx, ny] = obj.getHermiteGaussOrders(hgOrderXY(varargin{1}));
-            fprintf('Retrieved Order: %02d\n', hgOrderXY(varargin{1}));
+            [nx, ny] = Util.getHermiteGaussOrders(hgOrderXY(n));
             Uin = HG(nx,qz,k,x1) .* HG(ny,qz,k,y1);
         end
+
+        function Uout = getOutputField(obj, varargin)
+            [xL,yL] = obj.getMeshGridAtObservationPlane();
+            L = obj.propagationDistance;
+            qz = obj.complexBeamParameter + L;
+            k = obj.waveNumber;
+
+
+            if isempty(varargin)
+                Uout = HG(0,qz,k,xL) .* HG(0,qz,k,yL);
+                return;
+            end
+
+            n = varargin{1};
+            if ~isfloat(n)
+                Uout = HG(0,qz,k,xL) .* HG(0,qz,k,yL);
+                return;
+            end
+
+            hgOrderXY = obj.hermiteGaussOrders;
+            [nx, ny] = Util.getHermiteGaussOrders(hgOrderXY(n));
+            Uout = HG(nx,qz,k,xL) .* HG(ny,qz,k,yL);
+        end
+
         function [NxEff, NyEff] = getPhaseScreenGridSize(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
@@ -449,10 +474,6 @@ classdef SimulationParameters<handle
                     'should be smaller than %3.2e]\n'], ...
                     max(delta), zmax);
             end
-        end
-        function [nx, ny] = getHermiteGaussOrders(num)
-            nx = floor(num/10);
-            ny = floor(num - nx);
         end
     end
 end

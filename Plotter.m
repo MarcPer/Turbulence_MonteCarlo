@@ -39,6 +39,20 @@ classdef Plotter<handle
             grid on;
             Plotter.drawPlotInformation(data);
         end
+
+        function plotBars(data)
+            figure;
+            nGamma = numel(data);
+            [nrow, ncol] = Util.findOptimumSubplotGrid(nGamma);
+
+            for iGamma = 1 : nGamma
+
+                subplot(nrow, ncol, iGamma);
+                bar3(data{iGamma}.values);
+                Plotter.drawBarPlotInformation(data{iGamma});
+            end
+        end
+
         function drawPlotInformation(data)
             if ~isstruct(data)
                 return
@@ -60,6 +74,26 @@ classdef Plotter<handle
                 legend(data.info.labelLegend)
             end
         end
+
+        function drawBarPlotInformation(data)
+            if ~isstruct(data)
+                return
+            end
+            
+            if isfield(data.info,'title')
+                str = data.info.title;
+                title(str);
+            end
+            if isfield(data.info,'labelColumn')
+                str = data.info.labelColumn;
+                xlabel(str);
+            end
+            if isfield(data.info,'labelRow')
+                str = data.info.labelRow;
+                ylabel(str);
+            end
+        end
+
     end
 end
 

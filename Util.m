@@ -165,6 +165,7 @@ classdef Util<handle
                 str.(params{2*i-1}) = params{2*i};
             end
         end
+
         function normArray = normalize(A)
             % normalize Normalize matrices that compose n-dimensional input array
             
@@ -174,6 +175,7 @@ classdef Util<handle
                 normArray(:,:,i) = A(:,:,i)/sum(sum(A(:,:,i)));
             end
         end
+
         function [optRow, optCol] = findOptimumSubplotGrid(num)
             optRow = 1;
             optCol = 1;
@@ -187,6 +189,7 @@ classdef Util<handle
                 end
             end
         end
+
         function pvtProp = getSetPrivateProperties(obj)
             pvtProp = {};
             allProp = properties(obj);
@@ -197,6 +200,7 @@ classdef Util<handle
                 end
             end
         end
+        
         function pblProp = getSetPublicProperties(obj)
             pblProp = {};
             allProp = properties(obj);
@@ -222,6 +226,11 @@ classdef Util<handle
                     ip(ia,ib) = sum(sum(conj(A(:,:,ia)) .* B(:,:,ib), 2), 1);
                 end
             end
+        end
+        
+        function [nx, ny] = getHermiteGaussOrders(num)
+            nx = floor(num/10);
+            ny = floor(num - 10*nx);
         end
 
     end

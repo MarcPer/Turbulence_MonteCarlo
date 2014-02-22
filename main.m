@@ -23,7 +23,7 @@ usrIn.enumShutdown = 0;
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters(ioPaths,'FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
-simParams.setPointDetectorAtObservationPlane(true);
+simParams.setPointDetectorAtObservationPlane(false);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
@@ -61,6 +61,7 @@ try
     %Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
     % Plotter.plot2D(pwrAndSI{1});
     % Plotter.plot2D(pwrAndSI{2});
+    Plotter.plotBars(modeMatching);
         
     % EXPORT RESULTS (only if simulation was completed)
     Exporter.exportToDisk(ioPaths, modeMatching, usrIn, turbSimulator.simulationParameters, 'modeMatching');

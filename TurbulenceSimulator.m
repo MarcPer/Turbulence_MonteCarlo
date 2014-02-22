@@ -68,9 +68,7 @@ classdef TurbulenceSimulator<handle
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
-            [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(1);
-            phScreen = Util.displace(phz,deltaX,0);
-            phScreen = Util.crop(phScreen, Nx, Ny);
+            phScreen = Util.crop(phz, Nx, Ny);
             outMode = obj.propagate(phScreen);
         end
 
@@ -137,6 +135,8 @@ classdef TurbulenceSimulator<handle
 
         function modeOverlap = getModeMatching(obj)
             obj.numberOfTransverseSeparations = 1;
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
             nGamma = length(obj.simulationParameters.gammaStrength);
             obj.setFreeSpaceConditions();
             if  length(obj.simulationParameters.gammaStrength)<2
@@ -144,11 +144,11 @@ classdef TurbulenceSimulator<handle
             end
 
             modeOverlap = cell(nGamma-1,1);
+            refModes = zeros(Ny, Nx, numOrders);
 
-
-            fprintf('\nPropagating reference modes in free space...\t');
-            refModes = obj.propagate(0);
-            fprintf('Done\n');
+            for i = 1 : numOrders
+                refModes(:,:,i) = obj.simulationParameters.getOutputField(i);
+            end
 
             for iGamma = 2 : nGamma
                 if obj.isAborted
@@ -245,6 +245,7 @@ classdef TurbulenceSimulator<handle
                     end
                     obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
                     outputModes = obj.getFieldForEachMode();
+                    outputModes = Util.normalize(outputModes);
 
                     mm = mm + abs(Util.modeInnerProduct(refModes, outputModes)).^2;
                     UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
@@ -341,7 +342,7 @@ classdef TurbulenceSimulator<handle
             
             iGamma = obj.simulationParameters.gammaCurrentIndex;
 
-            tit = sprintf('Mode-Matching for Hermite-Gauss modes and gamma = %3.3g', ...
+            tit = sprintf('HG mode-match, gamma = %3.3g', ...
                 obj.simulationParameters.gammaStrength(iGamma));
             labelColumn = 'Transmitted Mode';
             labelRow = 'Reference Mode';
