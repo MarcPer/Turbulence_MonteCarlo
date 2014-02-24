@@ -40,6 +40,23 @@ classdef Plotter<handle
             Plotter.drawPlotInformation(data);
         end
 
+        function plotSemiLogX(data)
+            if isstruct(data)
+                x = data.columnParams;
+                y = data.values;
+            else
+                y = data;
+                x = 1 : length(data);
+            end
+            if length(y) < 2
+                return;
+            end
+            figure;
+            semilogx(x,y, 'LineWidth', 2);
+            grid on;
+            Plotter.drawPlotInformation(data);
+        end
+
         function plotBars(data)
             figure;
             nGamma = numel(data);

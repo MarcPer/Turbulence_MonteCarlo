@@ -102,6 +102,28 @@ classdef Calculator
                 'labelZ', labelZ);
             
         end
+
+        function ber = computeBitErrorRate(data)
+            if ~iscell(data)
+                error('calculator:computeBER', 'Input argument should be a cell.');
+            end
+            nGamma = numel(data{1}.params.gammaStrength);
+            ber = struct;
+            ber.info = struct('title', 'Bit-error-Rate', 'labelColumn', 'C_n^2', ...
+                    'labelZ', 'BER');
+            if nGamma < 2
+                return;
+            end
+            ber.columnParams = data{1}.params.structureConstantSquared;
+            ber.values = zeros(nGamma,1);
+
+            for iGamma = 1 : nGamma - 1
+                [nOrd, ~] = size(data{iGamma}.values);
+                ber.values(iGamma+1) = sum( sum( data{iGamma}.values .* ~eye(nOrd) ,2) ,1) ...
+                / sum( diag(data{iGamma}.values) );
+            end
+        end
+
     end
     
     methods(Static, Access = private)
@@ -231,6 +253,9 @@ classdef Calculator
                 end
             end
         end
+
+
+
     end
 end
 

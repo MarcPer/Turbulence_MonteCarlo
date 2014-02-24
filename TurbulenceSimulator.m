@@ -137,6 +137,9 @@ classdef TurbulenceSimulator<handle
             obj.numberOfTransverseSeparations = 1;
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
             numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            if numOrders == 1
+                fprintf('WARNING: Mode-match simulation is about to be performed with a single mode.');
+            end
             nGamma = length(obj.simulationParameters.gammaStrength);
             obj.setFreeSpaceConditions();
             if  length(obj.simulationParameters.gammaStrength)<2
