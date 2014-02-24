@@ -92,7 +92,9 @@ classdef SimulationParameters<handle
             L = obj.propagationDistance;
             qz = obj.complexBeamParameter + L;
             k = obj.waveNumber;
-
+            if obj.isFourthOrder
+                k = 2*k;
+            end
 
             if isempty(varargin)
                 Uout = HG(0,qz,k,xL) .* HG(0,qz,k,yL);

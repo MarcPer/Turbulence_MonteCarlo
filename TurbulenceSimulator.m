@@ -347,9 +347,12 @@ classdef TurbulenceSimulator<handle
             labelColumn = 'Transmitted Mode';
             labelRow = 'Reference Mode';
             labelZ = 'Mode-Matching';
+            tickX = Util.getHGOrderLabel(obj.simulationParameters.hermiteGaussOrders);
+            tickY = Util.getHGOrderLabel(obj.simulationParameters.hermiteGaussOrders);
+
             mmStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ);
+                'labelZ', labelZ, 'tickX', {tickX}, 'tickY', {tickY});
         end
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
             circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);

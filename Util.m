@@ -224,6 +224,8 @@ classdef Util<handle
             for ib = 1 : b3
                 for ia = 1 : a3
                     ip(ia,ib) = sum(sum(conj(A(:,:,ia)) .* B(:,:,ib), 2), 1);
+                    ip(ia,ib) = ip(ia,ib)/sqrt(sum(sum(abs(A(:,:,ia)).^2 ,2),1) * sum(sum(abs(B(:,:,ib)).^2 ,2),1));
+
                 end
             end
         end
@@ -231,6 +233,15 @@ classdef Util<handle
         function [nx, ny] = getHermiteGaussOrders(num)
             nx = floor(num/10);
             ny = floor(num - 10*nx);
+        end
+
+        function labelCell = getHGOrderLabel(orderList)
+            n = numel(orderList);
+            labelCell = cell(1,n);
+
+            for i = 1 : n
+                labelCell{i} = sprintf('%02d', orderList(i));
+            end
         end
 
     end

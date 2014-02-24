@@ -92,7 +92,14 @@ classdef Plotter<handle
                 str = data.info.labelRow;
                 ylabel(str);
             end
-        end
+            if isfield(data.info, 'tickX')
+                tck = data.info.tickX;
+                set(gca, 'XTickLabel', tck);
+            end
+            isfield(data.info, 'tickY')
+                tck = data.info.tickY;
+                set(gca, 'YTickLabel', tck);
+            end
 
     end
 end
