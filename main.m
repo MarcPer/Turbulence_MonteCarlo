@@ -62,7 +62,7 @@ try
     % Plotter.plot2D(pwrAndSI{1});
     % Plotter.plot2D(pwrAndSI{2});
     Plotter.plotBars(modeMatching);
-    Plotter.plotSemiLogX(Calculator.computeBitErrorRate(modeMatching));
+    Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(modeMatching));
         
     % EXPORT RESULTS (only if simulation was completed)
     Exporter.exportToDisk(ioPaths, modeMatching, usrIn, turbSimulator.simulationParameters, 'modeMatching');

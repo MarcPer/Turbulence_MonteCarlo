@@ -103,23 +103,45 @@ classdef Calculator
             
         end
 
-        function ber = computeBitErrorRate(data)
+        function er = computeErrorRateVsRelativeLengths(data)
             if ~iscell(data)
-                error('calculator:computeBER', 'Input argument should be a cell.');
+                error('calculator:computeERr0', 'Input argument should be a cell.');
             end
             nGamma = numel(data{1}.params.gammaStrength);
-            ber = struct;
-            ber.info = struct('title', 'Bit-error-Rate', 'labelColumn', 'C_n^2', ...
-                    'labelZ', 'BER');
+            er = struct;
+            er.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_L/r_0', ...
+                    'labelZ', 'ER');
             if nGamma < 2
                 return;
             end
-            ber.columnParams = data{1}.params.structureConstantSquared;
-            ber.values = zeros(nGamma,1);
+            er.columnParams = data{1}.params.waistAtObservationPlane ...
+                ./ data{1}.params.totalFriedCoherenceRadiusByStrength;
+            er.values = zeros(nGamma,1);
 
             for iGamma = 1 : nGamma - 1
                 [nOrd, ~] = size(data{iGamma}.values);
-                ber.values(iGamma+1) = sum( sum( data{iGamma}.values .* ~eye(nOrd) ,2) ,1) ...
+                er.values(iGamma+1) = sum( sum( data{iGamma}.values .* ~eye(nOrd) ,2) ,1) ...
+                / sum( diag(data{iGamma}.values) );
+            end
+        end
+
+        function er = computeErrorRateVsCn2(data)
+            if ~iscell(data)
+                error('calculator:computeERCn2', 'Input argument should be a cell.');
+            end
+            nGamma = numel(data{1}.params.gammaStrength);
+            er = struct;
+            er.info = struct('title', 'Error-Rate', 'labelColumn', 'C_n^2', ...
+                    'labelZ', 'ER');
+            if nGamma < 2
+                return;
+            end
+            er.columnParams = data{1}.params.structureConstantSquared;
+            er.values = zeros(nGamma,1);
+
+            for iGamma = 1 : nGamma - 1
+                [nOrd, ~] = size(data{iGamma}.values);
+                er.values(iGamma+1) = sum( sum( data{iGamma}.values .* ~eye(nOrd) ,2) ,1) ...
                 / sum( diag(data{iGamma}.values) );
             end
         end
