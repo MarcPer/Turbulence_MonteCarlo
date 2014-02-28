@@ -114,7 +114,7 @@ classdef Calculator
             if nGamma < 2
                 return;
             end
-            er.columnParams = data{1}.params.waistAtObservationPlane ...
+            er.columnParams = sqrt(2)*data{1}.params.waistAtObservationPlane ...
                 ./ data{1}.params.totalFriedCoherenceRadiusByStrength;
             er.values = zeros(nGamma,1);
 
@@ -143,6 +143,33 @@ classdef Calculator
                 [nOrd, ~] = size(data{iGamma}.values);
                 er.values(iGamma+1) = sum( sum( data{iGamma}.values .* ~eye(nOrd) ,2) ,1) ...
                 / sum( diag(data{iGamma}.values) );
+            end
+        end
+
+        function dp = computeDetectionProbabilityVsRelativeLengths(data)
+            if ~iscell(data)
+                error('calculator:computeDPr0', 'Input argument should be a cell.');
+            end
+            nGamma = numel(data{1}.params.gammaStrength);
+            nOrd = numel(data{1}.info.tickX);
+
+            dp = struct;
+            dp.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_L/r_0', ...
+                    'labelZ', 'ER');
+
+            leg = data{1}.info.tickX;
+            dp.info.labelLegend = leg;
+
+            if nGamma < 2
+                return;
+            end
+            dp.columnParams = sqrt(2)*data{1}.params.waistAtObservationPlane ...
+                ./ data{1}.params.totalFriedCoherenceRadiusByStrength;
+            dp.values = ones(nGamma,nOrd);
+
+            for iGamma = 1 : nGamma - 1
+                [nOrd, ~] = size(data{iGamma}.values);
+                dp.values(iGamma+1,:) = sum(data{iGamma}.values ,1);
             end
         end
 
