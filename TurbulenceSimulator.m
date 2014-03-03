@@ -166,6 +166,31 @@ classdef TurbulenceSimulator<handle
                 modeOverlap{iGamma-1}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
             end
         end
+
+        function modeParity = getModeParity(obj)
+            obj.numberOfTransverseSeparations = 1;
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            if numOrders == 1
+                fprintf('WARNING: Mode-match simulation is about to be performed with a single mode.');
+            end
+            nGamma = length(obj.simulationParameters.gammaStrength);
+            
+            modeParity = cell(nGamma,1);
+
+            for iGamma = 1 : nGamma
+                if obj.isAborted
+                    break;
+                end
+                 UserInput.printOutProgress('Turbulence strength', ...
+                    iGamma, nGamma);
+                obj.simulationParameters.gammaCurrentIndex = iGamma;
+                modeParity{iGamma} = obj.fillModeParityMetaData;
+                modeParity{iGamma}.params = obj.getSimulationParameters;
+
+                modeParity{iGamma}.values = obj.getParityAveragedOverRealizations;
+            end
+        end
     end
 
     methods(Access = private)
@@ -265,6 +290,38 @@ classdef TurbulenceSimulator<handle
             end
         end
 
+        function prt = getParityAveragedOverRealizations(obj)
+            obj.abortButtonHandle = UserInput.createWaitBar;
+
+            numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
+            nRe = obj.getNumberOfRealizations;
+            prt = zeros(numOrders,2);
+
+            try
+                for iRe = 1 : nRe
+                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+                    if obj.isAborted
+                        break;
+                    end
+                    obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
+                    outputModes = obj.getFieldForEachMode();
+                    outputModes = Util.normalize(outputModes);
+
+                    prt = prt + Util.getParityComponents(outputModes);
+                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
+                end
+                delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
+                prt = prt / nRe;
+            catch exception
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
+                rethrow(exception);
+            end
+        end
+
         function irrStruct = fillIrradianceMetaData(obj)
             irrStruct = struct;
             simParams = obj.simulationParameters;
@@ -338,6 +395,7 @@ classdef TurbulenceSimulator<handle
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
                 'labelZ', labelZ, 'labelLegend', labelLegend);
         end
+
         function mmStruct = fillModeOverlapMetaData(obj)
             mmStruct = struct;
             mmStruct.columnParams = obj.simulationParameters.hermiteGaussOrders;
@@ -357,6 +415,27 @@ classdef TurbulenceSimulator<handle
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
                 'labelZ', labelZ, 'tickX', {tickX}, 'tickY', {tickY});
         end
+
+        function prtStruct = fillModeParityMetaData(obj)
+            prtStruct = struct;
+            prtStruct.columnParams = [0,1];
+            prtStruct.rowParams = obj.simulationParameters.hermiteGaussOrders;
+            
+            iGamma = obj.simulationParameters.gammaCurrentIndex;
+
+            tit = sprintf('Parity Component, gamma = %3.3g', ...
+                obj.simulationParameters.gammaStrength(iGamma));
+            labelColumn = 'Transmitted Mode Parity';
+            labelRow = 'Collected Parity';
+            labelZ = 'Parity';
+            tickX = {'Even', 'Odd'};
+            tickY = {'Even', 'Odd'};
+
+            prtStruct.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ, 'tickX', tickX, 'tickY', tickY);
+        end
+
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)
             circ = obj.simulationParameters.getCircularApertureArray(apertureRadius);
             circ = repmat(circ, [1 1 size(irradiance, 3)]);

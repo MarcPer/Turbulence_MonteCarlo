@@ -229,6 +229,17 @@ classdef Util<handle
                 end
             end
         end
+
+        function prt = getParityComponents(modes)
+            evenComponent = modes+Util.rot90All(modes,2);
+            oddComponent = modes-Util.rot90All(modes,2);
+
+            even = sum(sum(abs(evenComponent).^2,2),1);
+
+            odd = sum(sum(abs(oddComponent).^2,2),1);
+            prt(:,1) = even(:)./(even(:)+odd(:));
+            prt(:,2) = odd(:)./(even(:)+odd(:));
+        end
         
         function [nx, ny] = getHermiteGaussOrders(num)
             nx = floor(num/10);
