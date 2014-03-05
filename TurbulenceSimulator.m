@@ -138,7 +138,8 @@ classdef TurbulenceSimulator<handle
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
             numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
             if numOrders == 1
-                fprintf('WARNING: Mode-match simulation is about to be performed with a single mode.');
+                fprintf('WARNING: Mode-match simulation is about to be performed with just a single mode.');
+                beep;
             end
             nGamma = length(obj.simulationParameters.gammaStrength);
             obj.setFreeSpaceConditions();
@@ -146,24 +147,24 @@ classdef TurbulenceSimulator<handle
                 error('turbuSimulator:modeMatching', 'This simulation requires a non-zero turbulence strength as input parameter.');
             end
 
-            modeOverlap = cell(nGamma-1,1);
+            modeOverlap = cell(nGamma,1);
             refModes = zeros(Ny, Nx, numOrders);
 
             for i = 1 : numOrders
                 refModes(:,:,i) = obj.simulationParameters.getOutputField(i);
             end
 
-            for iGamma = 2 : nGamma
+            for iGamma = 1 : nGamma
                 if obj.isAborted
                     break;
                 end
                  UserInput.printOutProgress('Turbulence strength', ...
-                    iGamma-1, nGamma-1);
+                    iGamma, nGamma);
                 obj.simulationParameters.gammaCurrentIndex = iGamma;
-                modeOverlap{iGamma-1} = obj.fillModeOverlapMetaData;
-                modeOverlap{iGamma-1}.params = obj.getSimulationParameters;
+                modeOverlap{iGamma} = obj.fillModeOverlapMetaData;
+                modeOverlap{iGamma}.params = obj.getSimulationParameters;
 
-                modeOverlap{iGamma-1}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
+                modeOverlap{iGamma}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
             end
         end
 
@@ -172,7 +173,8 @@ classdef TurbulenceSimulator<handle
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
             numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
             if numOrders == 1
-                fprintf('WARNING: Mode-match simulation is about to be performed with a single mode.');
+                fprintf('WARNING: Parity simulation is about to be performed with just a single mode.');
+                beep;
             end
             nGamma = length(obj.simulationParameters.gammaStrength);
             
@@ -433,7 +435,7 @@ classdef TurbulenceSimulator<handle
 
             prtStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'tickX', tickX, 'tickY', tickY);
+                'labelZ', labelZ, 'tickX', {tickX}, 'tickY', {tickY});
         end
 
         function pwr = getPowerOverCircularAperture(obj, irradiance, apertureRadius)

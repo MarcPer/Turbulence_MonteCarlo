@@ -23,7 +23,7 @@ usrIn.enumShutdown = 0;
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters(ioPaths,'FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
-    simParams.setPointDetectorAtObservationPlane(false);
+simParams.setPointDetectorAtObservationPlane(false);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
@@ -37,11 +37,11 @@ clear simParams;
 
 %% RUN SIMULATION
 try
-    % apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
-    % pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
+    apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
+    pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
     % pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
     % modeMatching = turbSimulator.getModeMatching;
-    parity = turbSimulator.getModeParity;
+%     parity = turbSimulator.getModeParity;
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
@@ -60,13 +60,13 @@ close all;
 
 try
 %     Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
-    % Plotter.plot2D(pwrAndSI{1});
-    % Plotter.plot2D(pwrAndSI{2});
-    Plotter.plotBars(parity);
-    % Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
+    Plotter.plot2D(pwrAndSI{1});
+    Plotter.plot2D(pwrAndSI{2});
+%     Plotter.plotBars(parity);
+%     Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
         
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, parity, usrIn, turbSimulator.simulationParameters, 'parity');
+    Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;

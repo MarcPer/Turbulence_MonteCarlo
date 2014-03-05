@@ -23,7 +23,7 @@ classdef Plotter<handle
                 end
             end
         end
-        function plot2D(data)
+        function plot2D(data, varargin)
             if isstruct(data)
                 x = data.columnParams;
                 y = data.values;
@@ -34,10 +34,18 @@ classdef Plotter<handle
             if length(y) < 2
                 return;
             end
-            figure;
-            plot(x,y, 'LineWidth', 2);
-            grid on;
-            Plotter.drawPlotInformation(data);
+            if size(varargin)==0
+                figure;
+                plot(x,y, 'LineWidth', 2);
+                grid on;
+                Plotter.drawPlotInformation(data);
+                return;
+            end
+            if isfloat(varargin{1})
+                hold all;
+                plot(varargin{1}, x,y, 'LineWidth', 2);
+                hold off;
+            end
         end
 
         function plotSemiLogX(data)
