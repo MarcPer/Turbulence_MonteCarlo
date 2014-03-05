@@ -134,7 +134,9 @@ classdef SimulationParameters<handle
             wvl = obj.wavelength;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = NaN;
-            
+
+            [nx, ny] = Util.getMaximumHermiteGaussOrders(obj.hermiteGaussOrders);
+
             D1 = obj.regionOfInterestAtSourcePlane;
             D2 = obj.regionOfInterestAtObservationPlane;
             
@@ -145,6 +147,9 @@ classdef SimulationParameters<handle
                 D1p = max(D1 + modelSensitivity*wvl*L ./ r0sw);
                 D2p = max(D2 + modelSensitivity*wvl*L ./ r0sw);
             end
+
+            D1p = sqrt(max(nx,ny)+1)*D1p;
+            D2p = sqrt(max(nx,ny)+1)*D2p;
         end
         function [deltaX, deltaY] = getTransverseSeparationInPixels(obj, sepIndex)
             r0sw = obj.totalFriedCoherenceRadiusByStrength;

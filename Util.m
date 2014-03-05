@@ -246,6 +246,23 @@ classdef Util<handle
             ny = floor(num - 10*nx);
         end
 
+        function [nxMax, nyMax] = getMaximumHermiteGaussOrders(m)
+            nOrd = numel(m);
+            nxMax = 0;
+            nyMax = 0;
+
+            for i = 1 : nOrd
+                [nx,ny] = Util.getHermiteGaussOrders(m(i));
+                if (nx > nxMax)
+                    nxMax = nx;
+                end
+                if (ny > nyMax)
+                    nyMax = ny;
+                end
+            end
+
+        end
+
         function labelCell = getHGOrderLabel(orderList)
             n = numel(orderList);
             labelCell = cell(1,n);

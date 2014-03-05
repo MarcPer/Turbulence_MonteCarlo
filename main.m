@@ -37,11 +37,11 @@ clear simParams;
 
 %% RUN SIMULATION
 try
-    apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
-    pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
-    % pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
-    % modeMatching = turbSimulator.getModeMatching;
-%     parity = turbSimulator.getModeParity;
+%     apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
+%     pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
+%     pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
+%     modeMatching = turbSimulator.getModeMatching;
+    parity = turbSimulator.getModeParity;
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
@@ -60,13 +60,13 @@ close all;
 
 try
 %     Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
-    Plotter.plot2D(pwrAndSI{1});
-    Plotter.plot2D(pwrAndSI{2});
-%     Plotter.plotBars(parity);
-%     Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
+%     Plotter.plot2D(pwrAndSI{1});
+%     Plotter.plot2D(pwrAndSI{2});
+    Plotter.plotBars(parity);
+    Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
         
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
+    Exporter.exportToDisk(ioPaths, parity, usrIn, turbSimulator.simulationParameters, 'parity');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
