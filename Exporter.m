@@ -7,9 +7,9 @@ classdef Exporter
     methods(Static)
         function exportToDisk(ioPaths,data,userInput,simParams,varargin)
             if isempty(varargin)
-                fileName = Exporter.getFullFilename(ioPaths, 'dat');
+                fileName = Exporter.getFullFilename(data, ioPaths, 'dat');
             else
-                fileName = Exporter.getFullFilename(ioPaths, 'dat', varargin{1});
+                fileName = Exporter.getFullFilename(data, ioPaths, 'dat', varargin{1});
             end
             fid = Exporter.getFileId(fileName);
 
@@ -22,7 +22,7 @@ classdef Exporter
                     Exporter.saveDataArray(fid, Exporter.getDataSet(data,i));
                     Exporter.saveFigure(ioPaths, Exporter.getDataSet(data,i));
                 end
-                Exporter.saveTimeStamp(fid);
+                Exporter.saveTimeStamp(data, fid);
                 Exporter.saveParametersFromFile(fid,ioPaths.inputParametersFileName,simParams);
                 Exporter.saveSetPrivateProperties(fid, simParams);
             catch exception
@@ -82,9 +82,15 @@ classdef Exporter
             end
             fprintf(fid, '\n--------------------------------- \n');
         end
-        function saveTimeStamp(fid)
-            dt = datestr(date, 'yyyy-mm-dd');
-            tm = datestr(clock, 'HH:MM:SS');
+        function saveTimeStamp(data, fid)
+            if iscell(data)
+                data = data{end};
+            end
+
+            dateAndTime = regexp(data.info.date, '_', 'split');
+            dt = dateAndTime{1};
+            tm = dateAndTime{2};
+
             fprintf(fid,'\n\nSimulation ended at %s of %s.\n', tm, dt);
         end
         function saveParametersFromFile(fidWriteTo, inputFileName,simParams)
@@ -159,15 +165,20 @@ classdef Exporter
             filename = Exporter.getFullFilename(ioPaths,'tiff');
             saveas(gcf,filename);
         end
-        function fileName = getFullFilename(ioPaths, extension, varargin)
+        function fileName = getFullFilename(data, ioPaths, extension, varargin)
             filePath = ioPaths.getExportPath;
             if ~exist(filePath, 'dir')
-                mkdir(filePath)
-            end           
+                mkdir(filePath);
+            end
+
+            if iscell(data)
+                lastData = data{end};
+            end
+
             if isempty(varargin)
-                fileName = ioPaths.getExportFileName(extension);
+                fileName = ioPaths.getExportFileName(lastData, extension);
             else
-                fileName = ioPaths.getExportFileName(extension, varargin{1});
+                fileName = ioPaths.getExportFileName(lastData, extension, varargin{1});
             end
             fileName = fullfile(filePath, fileName);
         end

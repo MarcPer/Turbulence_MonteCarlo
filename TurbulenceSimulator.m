@@ -96,6 +96,8 @@ classdef TurbulenceSimulator<handle
                     intGamma.values{iGamma} = Util.normalize(intGamma.values{iGamma});
                 end
             end
+
+            intGamma.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
         end
 
         function pwrAndSI = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
@@ -130,6 +132,8 @@ classdef TurbulenceSimulator<handle
                     obj.getPowerAnsSIOnCircularApertureAveragedOverRealizations();
             end
 
+            pwrGamma.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
+            scintIdx.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             pwrAndSI = {pwrGamma, scintIdx};
         end
 
@@ -165,6 +169,7 @@ classdef TurbulenceSimulator<handle
                 modeOverlap{iGamma}.params = obj.getSimulationParameters;
 
                 modeOverlap{iGamma}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
+                modeOverlap{iGamma}.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             end
         end
 
@@ -191,6 +196,7 @@ classdef TurbulenceSimulator<handle
                 modeParity{iGamma}.params = obj.getSimulationParameters;
 
                 modeParity{iGamma}.values = obj.getParityAveragedOverRealizations;
+                modeParity{iGamma}.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             end
         end
     end
@@ -250,7 +256,7 @@ classdef TurbulenceSimulator<handle
                 delete(obj.abortButtonHandle);
                 obj.abortButtonHandle = [];
                 pwr = pwr/nRe;
-                scintIdx = pwr2/nRe * pwr.^-2 - 1;
+                scintIdx = pwr2/nRe .* pwr.^-2 - 1;
             catch exception
                 if ~isempty(obj.abortButtonHandle)
                     delete(obj.abortButtonHandle);
