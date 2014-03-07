@@ -114,6 +114,10 @@ classdef Plotter<handle
             end
         end
 
+        function clearPlotInfo(obj)
+            obj.plotInfo = struct();
+        end
+
         function exportPlot(obj)
             dt = datestr(date, 'yyyy-mm-dd');
             tm = datestr(clock, 'HHMMSS');

@@ -109,12 +109,12 @@ classdef Calculator
             end
             nGamma = numel(data{1}.params.gammaStrength);
             er = struct;
-            er.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_L/r_0', ...
+            er.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_1/r_0', ...
                     'labelZ', 'ER');
             if nGamma < 2
                 return;
             end
-            er.columnParams = sqrt(2)*data{1}.params.waistAtObservationPlane ...
+            er.columnParams = sqrt(2)*data{1}.params.waistAtSourcePlane ...
                 ./ data{1}.params.totalFriedCoherenceRadiusByStrength;
             er.values = zeros(nGamma,1);
 
@@ -154,7 +154,7 @@ classdef Calculator
             nOrd = numel(data{1}.info.tickX);
 
             dp = struct;
-            dp.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_L/r_0', ...
+            dp.info = struct('title', 'Error-Rate', 'labelColumn', '2\sigma_1/r_0', ...
                     'labelZ', 'ER');
 
             leg = data{1}.info.tickX;
@@ -163,7 +163,7 @@ classdef Calculator
             if nGamma < 2
                 return;
             end
-            dp.columnParams = sqrt(2)*data{1}.params.waistAtObservationPlane ...
+            dp.columnParams = sqrt(2)*data{1}.params.waistAtSourcePlane ...
                 ./ data{1}.params.totalFriedCoherenceRadiusByStrength;
             dp.values = ones(nGamma,nOrd);
 

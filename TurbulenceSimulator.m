@@ -387,7 +387,7 @@ classdef TurbulenceSimulator<handle
             labelLegend = obj.buildLegendCell();
             pwrStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'labelLegend', labelLegend);
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
         end
         function siStruct = fillScintillationIndexOnCircularApertureMetaData(obj)
             siStruct = struct;
@@ -401,7 +401,7 @@ classdef TurbulenceSimulator<handle
             labelLegend = obj.buildLegendCell();
             siStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'labelLegend', labelLegend);
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
         end
 
         function mmStruct = fillModeOverlapMetaData(obj)

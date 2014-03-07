@@ -57,6 +57,7 @@ classdef SimulationParameters<handle
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
         end
+        
         function sg = getSuperGaussianFilter(obj)
             delta1 = obj.gridSpacingSourcePlane;
             [x1, y1] = obj.getMeshGridAtSourcePlane();
