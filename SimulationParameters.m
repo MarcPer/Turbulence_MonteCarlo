@@ -124,7 +124,7 @@ classdef SimulationParameters<handle
             NxEff = Nx + extraGridLength;
             NyEff = Ny; % Transverse separation only in x direction for now.
             
-            % Get smaller power of 2 numbers that exceeds NxEff and NyEff
+            % Get smaller power of 2 numbers that exceed NxEff and NyEff
             NxEff = 2.^(ceil(log2(NxEff)));
             NyEff = 2.^(ceil(log2(NyEff)));            
         end

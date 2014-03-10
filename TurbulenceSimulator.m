@@ -46,7 +46,6 @@ classdef TurbulenceSimulator<handle
 
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
-            phz = obj.inversionAndFourthOrderOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             fieldSep = zeros(Ny, Nx, nSep);
@@ -56,15 +55,14 @@ classdef TurbulenceSimulator<handle
                 if obj.isAborted
                     break;
                 end
-                [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(iSep);
-                phScreen = Util.displace(phz,deltaX,0);
-                phScreen = Util.crop(phScreen, Nx, Ny);
+                phScreen = obj.inversionAndDisplacementOperationsOnScreen(iSep);
+                
                 fieldSep(:,:,iSep) = obj.propagate(phScreen);
             end
         end
 
         function outMode = getFieldForEachMode(obj)
-            phz = obj.inversionAndFourthOrderOperationsOnScreen();
+            phz = obj.inversionAndDisplacementOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
@@ -202,17 +200,33 @@ classdef TurbulenceSimulator<handle
     end
 
     methods(Access = private)
-        function phScreen = inversionAndFourthOrderOperationsOnScreen(obj)
+        function phScreen = inversionAndDisplacementOperationsOnScreen(obj, varargin)
             phScreen = obj.phaseScreenProfiles;
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+
             if ~(obj.simulationParameters.isFourthOrder)
+                phScreen = Util.crop(phScreen, Nx, Ny);
                 return;
             end
-            
-            if obj.simulationParameters.isInverted
-                phScreen = phScreen + Util.rot90All(phScreen,2);
-            else
-                phScreen = 2*phScreen;
+
+            separation = 0;
+            if ~isempty(varargin)
+                if isfloat(varargin{1})
+                    separation = round(varargin{1});
+                end
             end
+
+            phScreen2 = phScreen;
+            if obj.simulationParameters.isInverted
+                phScreen2 = Util.rot90All(phScreen2,2);
+            end
+
+            if separation
+                [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(separation);
+                phScreen2 = Util.displace(phScreen2,deltaX,0);
+            end
+                
+           phScreen = Util.crop(phScreen + phScreen2, Nx, Ny);
         end
 
         function nRe = getNumberOfRealizations(obj)
