@@ -46,6 +46,8 @@ try
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
+    set(0,'ShowHiddenHandles','on')
+    delete(get(0,'Children'))
     rethrow(exception);
 end
 
@@ -67,7 +69,7 @@ try
 %     pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
         
     % EXPORT RESULTS (only if simulation was completed)
-%     Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
+    Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;

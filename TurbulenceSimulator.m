@@ -201,10 +201,15 @@ classdef TurbulenceSimulator<handle
 
     methods(Access = private)
         function phScreen = inversionAndDisplacementOperationsOnScreen(obj, varargin)
+            idxGamma = obj.simulationParameters.gammaCurrentIndex;
+            r0 = obj.simulationParameters.totalFriedCoherenceRadiusByStrength;
+
             phScreen = obj.phaseScreenProfiles;
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+            [NxEff, ~] = obj.simulationParameters.getPhaseScreenGridSize;
+            phScreen = Util.crop(phScreen,NxEff, Ny);
 
-            if ~(obj.simulationParameters.isFourthOrder)
+            if isinf(r0(idxGamma)) || ~(obj.simulationParameters.isFourthOrder)
                 phScreen = Util.crop(phScreen, Nx, Ny);
                 return;
             end
@@ -223,7 +228,8 @@ classdef TurbulenceSimulator<handle
 
             if separation
                 [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(separation);
-                phScreen2 = Util.displace(phScreen2,deltaX,0);
+                phScreen = Util.displace(phScreen, round(deltaX/2),0);
+                phScreen2 = Util.displace(phScreen2, round(deltaX/2),0);
             end
                 
            phScreen = Util.crop(phScreen + phScreen2, Nx, Ny);
