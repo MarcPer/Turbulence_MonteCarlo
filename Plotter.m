@@ -83,6 +83,33 @@ classdef Plotter<handle
             Plotter.drawPlotInformation(data);
         end
 
+        function plotSemiLogY(obj, data, varargin)
+            if isstruct(data)
+                x = data.columnParams;
+                y = data.values;
+            else
+                y = data;
+                x = 1 : length(data);
+            end
+            if length(y) < 2
+                return;
+            end
+
+            obj.setPlotInfo(data);
+            if size(varargin)==0
+                figure;
+                semilogy(x,y, 'LineWidth', 2);
+                grid on;
+                Plotter.drawPlotInformation(data);
+                return;
+            end
+            if isfloat(varargin{1})
+                hold all;
+                semilogy(varargin{1}, x,y, 'LineWidth', 2);
+                hold off;
+            end
+        end
+
         function plotBars(obj, data)
             figure;
             nGamma = numel(data);

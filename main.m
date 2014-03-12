@@ -10,9 +10,9 @@ close all; clear all;
 %
 % <LENGTH UNITS: m>
 
-ioPaths = IOPaths;   % Imports functions and defines methods for export paths
-usrIn = UserInput;
-pltr = Plotter(ioPaths);
+ioPaths = IOPaths;  % Imports functions and defines methods for export paths
+usrIn = UserInput;  % Stores user input information
+pltr = Plotter(ioPaths);    % Stores data source information for later reference
 
 % Ask user to choose simulation type
 usrIn.getSimulationType;
