@@ -321,7 +321,7 @@ classdef SimulationParameters<handle
             ztmax_idx = find(zmask, 1, 'last');
             s = sum((1-z(ztmin_idx:ztmax_idx)/L).^(5/3));
             
-            r0 = (0.423 * k^2/(7.75 * L^(5/3) * s) * g.^2).^(-3/5);
+            r0 = (0.423 * k^2/(2.601 * L^(5/3) * s) * g.^(5/3)).^(-3/5);
             r0 = repmat(r0, 1, npl);
             r0 = r0 .* repmat(zmask, length(g), 1);
             r0(isinf(1./r0)) = inf;
