@@ -46,7 +46,6 @@ classdef TurbulenceSimulator<handle
 
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
-            phz = obj.inversionAndFourthOrderOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             fieldSep = zeros(Ny, Nx, nSep);
@@ -56,15 +55,14 @@ classdef TurbulenceSimulator<handle
                 if obj.isAborted
                     break;
                 end
-                [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(iSep);
-                phScreen = Util.displace(phz,deltaX,0);
-                phScreen = Util.crop(phScreen, Nx, Ny);
+                phScreen = obj.inversionAndDisplacementOperationsOnScreen(iSep);
+                
                 fieldSep(:,:,iSep) = obj.propagate(phScreen);
             end
         end
 
         function outMode = getFieldForEachMode(obj)
-            phz = obj.inversionAndFourthOrderOperationsOnScreen();
+            phz = obj.inversionAndDisplacementOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             
             obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
@@ -96,6 +94,8 @@ classdef TurbulenceSimulator<handle
                     intGamma.values{iGamma} = Util.normalize(intGamma.values{iGamma});
                 end
             end
+
+            intGamma.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
         end
 
         function pwrAndSI = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
@@ -130,6 +130,8 @@ classdef TurbulenceSimulator<handle
                     obj.getPowerAnsSIOnCircularApertureAveragedOverRealizations();
             end
 
+            pwrGamma.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
+            scintIdx.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             pwrAndSI = {pwrGamma, scintIdx};
         end
 
@@ -165,6 +167,7 @@ classdef TurbulenceSimulator<handle
                 modeOverlap{iGamma}.params = obj.getSimulationParameters;
 
                 modeOverlap{iGamma}.values = obj.getModeMatchingAveragedOverRealizations(refModes);
+                modeOverlap{iGamma}.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             end
         end
 
@@ -191,22 +194,45 @@ classdef TurbulenceSimulator<handle
                 modeParity{iGamma}.params = obj.getSimulationParameters;
 
                 modeParity{iGamma}.values = obj.getParityAveragedOverRealizations;
+                modeParity{iGamma}.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             end
         end
     end
 
     methods(Access = private)
-        function phScreen = inversionAndFourthOrderOperationsOnScreen(obj)
+        function phScreen = inversionAndDisplacementOperationsOnScreen(obj, varargin)
+            idxGamma = obj.simulationParameters.gammaCurrentIndex;
+            r0 = obj.simulationParameters.totalFriedCoherenceRadiusByStrength;
+
             phScreen = obj.phaseScreenProfiles;
-            if ~(obj.simulationParameters.isFourthOrder)
+            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+            [NxEff, ~] = obj.simulationParameters.getPhaseScreenGridSize;
+            phScreen = Util.crop(phScreen,NxEff, Ny);
+
+            if isinf(r0(idxGamma)) || ~(obj.simulationParameters.isFourthOrder)
+                phScreen = Util.crop(phScreen, Nx, Ny);
                 return;
             end
-            
-            if obj.simulationParameters.isInverted
-                phScreen = phScreen + Util.rot90All(phScreen,2);
-            else
-                phScreen = 2*phScreen;
+
+            separation = 0;
+            if ~isempty(varargin)
+                if isfloat(varargin{1})
+                    separation = round(varargin{1});
+                end
             end
+
+            phScreen2 = phScreen;
+            if obj.simulationParameters.isInverted
+                phScreen2 = Util.rot90All(phScreen2,2);
+            end
+
+            if separation
+                [deltaX, ~] = obj.simulationParameters.getTransverseSeparationInPixels(separation);
+                phScreen = Util.displace(phScreen, round(deltaX/2),0);
+                phScreen2 = Util.displace(phScreen2, round(deltaX/2),0);
+            end
+                
+           phScreen = Util.crop(phScreen + phScreen2, Nx, Ny);
         end
 
         function nRe = getNumberOfRealizations(obj)
@@ -381,7 +407,7 @@ classdef TurbulenceSimulator<handle
             labelLegend = obj.buildLegendCell();
             pwrStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'labelLegend', labelLegend);
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
         end
         function siStruct = fillScintillationIndexOnCircularApertureMetaData(obj)
             siStruct = struct;
@@ -395,7 +421,7 @@ classdef TurbulenceSimulator<handle
             labelLegend = obj.buildLegendCell();
             siStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ, 'labelLegend', labelLegend);
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
         end
 
         function mmStruct = fillModeOverlapMetaData(obj)

@@ -26,7 +26,7 @@ classdef IOPaths<handle
            dt =  datestr(date, 'yyyy-mm-dd');
            expPath = fullfile(io.rootExportFolder,dt);
         end
-        function expFileName = getExportFileName(io,varargin)
+        function expFileName = getExportFileName(io,data,varargin)
             ext = 'dat';
             identifier = 'SimData';
             if ~isempty(varargin)
@@ -36,8 +36,9 @@ classdef IOPaths<handle
                 end
             end
             
-            dt = datestr(date, 'yyyy-mm-dd');
-            tm = datestr(clock, 'HHMMSS');
+            dateAndTime = regexp(data.info.date, '_', 'split');
+            dt = dateAndTime{1};
+            tm = dateAndTime{2};
             expFileName = [dt, '_', identifier, '_', tm, '.', ext];
             
             if exist(io.getExportPath, 'dir')

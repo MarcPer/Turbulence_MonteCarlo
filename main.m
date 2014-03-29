@@ -10,8 +10,9 @@ close all; clear all;
 %
 % <LENGTH UNITS: m>
 
-ioPaths = IOPaths;   % Imports functions and defines methods for export paths
-usrIn = UserInput;
+ioPaths = IOPaths;  % Imports functions and defines methods for export paths
+usrIn = UserInput;  % Stores user input information
+pltr = Plotter(ioPaths);    % Stores data source information for later reference
 
 % Ask user to choose simulation type
 usrIn.getSimulationType;
@@ -45,6 +46,8 @@ try
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
+    set(0,'ShowHiddenHandles','on')
+    delete(get(0,'Children'))
     rethrow(exception);
 end
 
@@ -59,11 +62,11 @@ end
 close all;
 
 try
-%     Plotter.plotIntensityProfilesForEachGamma(pwrGamma);
-    Plotter.plot2D(pwrAndSI{1});
-    Plotter.plot2D(pwrAndSI{2});
-%     Plotter.plotBars(parity);
-%     Plotter.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
+%     pltr.plotIntensityProfilesForEachGamma(pwrGamma);
+    pltr.plot2D(pwrAndSI{1});
+    pltr.plot2D(pwrAndSI{2});
+%     pltr.plotBars(parity);
+%     pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
         
     % EXPORT RESULTS (only if simulation was completed)
     Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');

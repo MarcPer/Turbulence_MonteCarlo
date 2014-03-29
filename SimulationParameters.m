@@ -57,6 +57,7 @@ classdef SimulationParameters<handle
            simParams.setDefaultValueForBlankParameters();
            simParams.computeDerivedQuantities();
         end
+        
         function sg = getSuperGaussianFilter(obj)
             delta1 = obj.gridSpacingSourcePlane;
             [x1, y1] = obj.getMeshGridAtSourcePlane();
@@ -118,15 +119,31 @@ classdef SimulationParameters<handle
             r0sw(isinf(r0sw)) = 0;
             r0sw = r0sw(obj.gammaCurrentIndex);
             maxSep = max(obj.transverseSeparationInR0Units);
-            extraGridLength = maxSep * r0sw/ min(obj.gridSpacingVector);
+            extraGridLength = maxSep/2 * r0sw/ min(obj.gridSpacingVector);
             
             NxEff = Nx + extraGridLength;
             NyEff = Ny; % Transverse separation only in x direction for now.
             
-            % Get smaller power of 2 numbers that exceeds NxEff and NyEff
+            % Get smaller power of 2 numbers that exceed NxEff and NyEff
             NxEff = 2.^(ceil(log2(NxEff)));
             NyEff = 2.^(ceil(log2(NyEff)));            
         end
+
+        function [NxMax, NyMax] = getMaximumScreenGridSize(obj)
+            [Nx, Ny] = obj.getTransverseGridSize;
+            r0sw = obj.totalFriedCoherenceRadiusByStrength;
+            r0sw(isinf(r0sw)) = 0;
+            maxSep = max(obj.transverseSeparationInR0Units);
+            extraGridLength = maxSep/2 * r0sw/ min(obj.gridSpacingVector);
+            
+            NxMax = Nx + max(extraGridLength);
+            NyMax = Ny; % Transverse separation only in x direction for now.
+            
+            % Get smaller power of 2 numbers that exceed NxMax and NyMax
+            NxMax = 2.^(ceil(log2(NxMax)));
+            NyMax = 2.^(ceil(log2(NyMax)));            
+        end        
+
         function [D1p, D2p] = getEffectiveROI(obj)
             modelSensitivity = 4; % see pag. 173
             

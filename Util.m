@@ -1,4 +1,4 @@
-classdef Util<handle
+classdef Util
     
     methods(Static)
         function Aout = displace(A, xt, yt)
@@ -36,11 +36,15 @@ classdef Util<handle
                 error('displace:intChk', 'Second and third arguments must be integers.')
             end
             
+            % Return if displacement is set to 0
+            if (all(~xt) && all(~yt))
+                Aout = A;
+                return;
+            end
+
             % Vector with sizes of A
             m = zeros(1,ndims(A));
-            for i = 1 : ndims(A)
-                m(i) = size(A,i);
-            end
+            m = size(A);
             
             % Number of matrices forming A
             len = length(A(1,1,:));
@@ -59,41 +63,36 @@ classdef Util<handle
                     'Size mismatch between input matrix and displacement vector.')
             end
             
-            % Vectors with sizes of displacement matrices in X and Y directions
-            mx = [repmat(m(1),len,1), abs(xt(:))];
-            my = [abs(yt(:)), repmat(m(2),len,1)];
-            
-            
-            Aout = A;
+            Aout = zeros(size(A));
             
             % Horizontal displacement
             for i = 1 : len
-                if xt(i) ~= 0
-                    if xt(i) > 0
-                        Atemp = [zeros(mx(i,:)), Aout(:,:,i)];
-                        Aout(:,:,i) = Atemp(:, 1: end - xt(i));
-                    elseif xt(i) < 0
-                        Atemp = [ Aout(:,:,i), zeros(mx(i,:))];
-                        Aout(:,:,i) = Atemp(:, 1 + abs(xt(i)) : end);
-                    end
+                if xt(i) > 0
+                    Aout(:,abs(xt(i))+1:end,i) = A(:, 1: end - abs(xt(i)), i);
+                elseif xt(i) < 0
+                    Aout(:, 1: end -abs(xt(i)), i) = A(:, 1 + abs(xt(i)) : end, i);
                 end
             end
-            Aout = reshape(Aout, m);
+
+            if size(Aout)~=m
+                Aout = reshape(Aout, m);
+            end
             
             % Vertical displacement
             for i = 1 : len
-                if yt(i) ~= 0
-                    if yt(i) > 0
-                        Atemp = [zeros(my(i,:)); Aout(:,:,i)];
-                        Aout(:,:,i) = Atemp(1: end - yt(i), :);
-                    elseif yt(i) < 0
-                        Atemp = [ Aout(:,:,i); zeros(my(i,:))];
-                        Aout(:,:,i) = Atemp(1 + abs(yt(i)): end, :);
-                    end
+                if yt(i) > 0
+                    Aout(abs(yt(i))+1:end,:,i) = A(1: end - abs(yt(i)), :,i);
+                elseif yt(i) < 0
+                    Aout(1: end-abs(yt(i)),:,i) = A(1 + abs(yt(i)): end, :, i);
                 end
             end
-            Aout = reshape(Aout, m);
+
+            if size(Aout)~=m
+                Aout = reshape(Aout, m);
+            end
+
         end
+        
         function Aout = crop(A, width, height)
             if nargin ~= 3
                 error('crop:argChk', 'Wrong number of input arguments. It should be 3.')
@@ -108,17 +107,18 @@ classdef Util<handle
                 m(i) = size(A,i);
             end
             
-            if (width == m(2) || height == m(1))
+            if (width == m(2) && height == m(1))
                 Aout = A;
                 return;
             end
             
-            centerIndex = [floor(m(1)/2 + 1/2), floor(m(2)/2+1/2)];
+            centerIndex = [ceil(m(1)/2 + 1/2), ceil(m(2)/2+1/2)];
             Aout = A(centerIndex(1) - floor(height/2) : ...
                 centerIndex(1) - floor(height/2) + height - 1, ...
                 centerIndex(2) - floor(width/2) : ...
                 centerIndex(2) - floor(width/2) + width - 1, :);
         end
+        
         function B = rot90All( A, n )
             %rot90All Rotates multidimensional array.
             %   SYNTAX
@@ -159,6 +159,7 @@ classdef Util<handle
             B = reshape(B, m);
             
         end       
+        
         function str = transformInputParametersIntoStructure(params)
             str = struct;
             for i = 1 : floor(numel(params)/2)
