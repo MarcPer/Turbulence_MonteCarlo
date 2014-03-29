@@ -250,7 +250,7 @@ classdef TurbulenceSimulator<handle
                 delete(obj.abortButtonHandle);
                 obj.abortButtonHandle = [];
                 pwr = pwr/nRe;
-                scintIdx = pwr2/nRe * pwr.^-2 - 1;
+                scintIdx = pwr2/nRe .* pwr.^-2 - 1;
             catch exception
                 if ~isempty(obj.abortButtonHandle)
                     delete(obj.abortButtonHandle);
