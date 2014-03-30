@@ -19,7 +19,7 @@ usrIn.getSimulationType;
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -38,11 +38,12 @@ clear simParams;
 
 %% RUN SIMULATION
 try
-    apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
-    pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
-%     pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
-%     modeMatching = turbSimulator.getModeMatching;
-%     parity = turbSimulator.getModeParity;
+    % apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
+    % pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
+    pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
+    slitPwr = Calculator.computePowerThroughSlit(pwrGamma.values, turbSimulator.simulationParameters);
+    % modeMatching = turbSimulator.getModeMatching;
+    % parity = turbSimulator.getModeParity;
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
@@ -62,14 +63,15 @@ end
 close all;
 
 try
-%     pltr.plotIntensityProfilesForEachGamma(pwrGamma);
-    pltr.plot2D(pwrAndSI{1});
-    pltr.plot2D(pwrAndSI{2});
-%     pltr.plotBars(parity);
-%     pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
+    % pltr.plotIntensityProfilesForEachGamma(pwrGamma);
+    % pltr.plot2D(pwrAndSI{1});
+    % pltr.plot2D(pwrAndSI{2});
+    % pltr.plotBars(parity);
+    % pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
+    pltr.plot2D(slitPwr);
         
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, pwrAndSI, usrIn, turbSimulator.simulationParameters, 'pwrAndSI');
+    Exporter.exportToDisk(ioPaths, slitPwr, usrIn, turbSimulator.simulationParameters, 'slitPwr');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;

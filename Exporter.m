@@ -150,10 +150,10 @@ classdef Exporter
             for p = 1 : length(pvtProp)
                  fprintf(fid, '%s: ', pvtProp{p});
                 if length(simParams.(pvtProp{p})) == 1
-                    fprintf(fid, '%4.3g', simParams.(pvtProp{p}));
+                    fprintf(fid, '%4.4g', simParams.(pvtProp{p}));
                 else
-                    fprintf(fid, '%4.3g, ', simParams.(pvtProp{p})(1:end-1));
-                    fprintf(fid, '%4.3g', simParams.(pvtProp{p})(end));
+                    fprintf(fid, '%4.4g, ', simParams.(pvtProp{p})(1:end-1));
+                    fprintf(fid, '%4.4g', simParams.(pvtProp{p})(end));
                 end
                 fprintf(fid, '\n');
             end
@@ -173,6 +173,8 @@ classdef Exporter
 
             if iscell(data)
                 lastData = data{end};
+            else
+                lastData = data;
             end
 
             if isempty(varargin)

@@ -40,22 +40,23 @@ classdef Calculator
             end
             
             pwrSlit = struct;
-            pwrSlit.data.columnParams = simParams.gammaStrength;
-            pwrSlit.data.rowParams = simParams.transverseSeparationInR0Units;
+            pwrSlit.columnParams = simParams.gammaStrength;
+            pwrSlit.rowParams = simParams.transverseSeparationInR0Units;
             
             if simParams.isFourthOrder
-                pwrSlit.data.values = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit.values = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
             else
-                pwrSlit.data.values = Calculator.intensitySlitIntegratePx(intProfile, slitWidthPx);
+                pwrSlit.values = Calculator.intensitySlitIntegratePx(intProfile, slitWidthPx);
             end
             
             tit = 'Intensity vs Turbulence Strength';
             labelColumn = '\gamma';
             labelRow = 'Separation (in r0)';
             labelZ = 'Power through slit';
+            dt = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             pwrSlit.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ);
+                'labelZ', labelZ, 'date', dt);
             
         end
         function pwrSlit = computePowerThroughCircularAperture(apertureDiameter, intProfile, simParams)
@@ -227,7 +228,10 @@ classdef Calculator
                     cSlit .* intProfile{iCell}, 2), 1);
                 
             end
-            
+            % Normalization
+            c0 = coincSlitPwr(:,1);
+            c0 = repmat(c0, [1 numCells]);
+            coincSlitPwr = coincSlitPwr ./ c0;
         end
         function singSlitPwr = intensitySlitIntegratePx(intProfile, slitWidth)
             %intensitySlitIntegratePx Integrates array over a slit of width 'a' 
@@ -268,7 +272,9 @@ classdef Calculator
                     slit .* intProfile{iCell}, 2), 1);
                 
             end
-            
+            s0 = singSlitPwr(:,1);
+            s0 = repmat(s0, [1 numCells]);
+            singSlitPwr = singSlitPwr ./ s0;
         end 
         function [hght, wdth, numSep] = getSize(A)
             if ~iscell(A)

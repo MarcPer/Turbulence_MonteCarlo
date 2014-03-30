@@ -13,7 +13,7 @@ classdef SimulationParameters<handle
         slitWidth;
         circularApertureRadius;
         % Turbulence Statistics
-        gammaStrength;
+        gammaRaw;
         gammaCurrentIndex;
         outerScale;
         innerScale;
@@ -27,12 +27,13 @@ classdef SimulationParameters<handle
         transverseGridSize;
         gridSpacingSourcePlane;
         gridSpacingObservationPlane;
-		transverseSeparationInR0Units;
+        transverseSeparationInR0Units;
     end
     
     properties(GetAccess = public, SetAccess = private)
-		% DERIVED PARAMETERS
-		waveNumber;
+        % DERIVED PARAMETERS
+        waveNumber;
+        gammaStrength;
         isWaistAtSourcePlane;
 		planePositions;
 		gridSpacingVector;
@@ -294,9 +295,10 @@ classdef SimulationParameters<handle
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 4*w1;
-           obj.regionOfInterestAtObservationPlane = 4*wn;
+           obj.regionOfInterestAtSourcePlane = 2*w1;
+           obj.regionOfInterestAtObservationPlane = 2*wn;
            
+           obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
            obj.computeStructureConstantSquared();
         end
@@ -324,6 +326,11 @@ classdef SimulationParameters<handle
                 q = -L -1i*k*wn^2/2;
             end
         end
+
+        function computeGammaStrength(obj)
+            obj.gammaStrength = obj.gammaRaw * 10^(-36/5);
+        end
+
         function computeFriedCoherenceRadiusMatrix(obj)
             L = obj.propagationDistance;
             z = obj.planePositions;
