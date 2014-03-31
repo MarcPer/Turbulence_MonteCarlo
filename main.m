@@ -63,7 +63,7 @@ end
 close all;
 
 try
-    % pltr.plotIntensityProfilesForEachGamma(pwrGamma);
+    pltr.plotIntensityProfilesForEachGamma(pwrGamma);
     % pltr.plot2D(pwrAndSI{1});
     % pltr.plot2D(pwrAndSI{2});
     % pltr.plotBars(parity);

@@ -380,7 +380,7 @@ classdef TurbulenceSimulator<handle
                     obj.phaseScreenProfiles = generateScreen(obj.simulationParameters);
                     outputField =  ...
                         obj.getFieldForEachTransverseSeparation();
-                    IavgRe = IavgRe + abs(outputField).^2;
+                    IavgRe = IavgRe + Util.normalize(abs(outputField).^2);
                     UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
                 end
                 delete(obj.abortButtonHandle);

@@ -199,11 +199,15 @@ classdef SimulationParameters<handle
         end
 		function fail = constraintAnalysis(obj)
         L = obj.propagationDistance;
-        wn = obj.waistAtObservationPlane;
         k = obj.waveNumber;
         [D1p, D2p] = obj.getEffectiveROI;
         
-		rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
+        if obj.isWaistAtSourcePlane
+            rad = Inf;
+        else
+            wn = obj.waistAtObservationPlane;
+            rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
+        end
 		
 		figHndl = figure;
 		params = struct('figureHandle', figHndl, ...
@@ -295,8 +299,8 @@ classdef SimulationParameters<handle
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 2*w1;
-           obj.regionOfInterestAtObservationPlane = 2*wn;
+           obj.regionOfInterestAtSourcePlane = 4*w1;
+           obj.regionOfInterestAtObservationPlane = 4*wn;
            
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
@@ -431,15 +435,15 @@ classdef SimulationParameters<handle
             D1p = params.effectiveSourceROI;
             D2p = params.effectiveObsROI;
             
-            deltaMin = abs(-D2p/D1p*delta1 + wvl*L/D1p);
+            deltaMax = abs(-D2p/D1p*delta1 + wvl*L/D1p);
             
-            fail1 = (deltan >= deltaMin);
+            fail1 = (deltan >= deltaMax);
             fprintf('Constraint 1: ');
             if ~fail1
                 fprintf('Satisfied\n');
             else
                 fprintf('Not satisfied [deltan = %3.2e should be smaller than %3.2e]\n', ...
-                    deltan, deltaMin);
+                    deltan, deltaMax);
             end
         end
         function fail2 = checkConstraint2(obj,params)
@@ -492,18 +496,20 @@ classdef SimulationParameters<handle
             N = min(Nx);
             deltan = obj.gridSpacingObservationPlane;
             delta1 = obj.gridSpacingSourcePlane;
-            delta = obj.gridSpacingVector;
-            
+            npl = obj.numberOfPhasePlanes;
+
+            zSep = obj.planePositions(2:end) - obj.planePositions(1:end-1);
             zmax = min([delta1 deltan])^2 * N / wvl;
+            nPlanesMin = ceil(obj.propagationDistance/zmax)+1;
             
-            fail4 = (max(delta) >= zmax);
+            fail4 = (npl <= nPlanesMin || max(zSep) >= zmax);
             fprintf('Constraint 4: ');
             if ~fail4
                 fprintf('Satisfied\n');
             else
-                fprintf(['Not satisfied [Max(delta) = %3.2e ', ...
-                    'should be smaller than %3.2e]\n'], ...
-                    max(delta), zmax);
+                fprintf(['Not satisfied [Number of planes = %u ', ...
+                    'should be greater than %u]\n'], ...
+                    npl, nPlanesMin);
             end
         end
     end
