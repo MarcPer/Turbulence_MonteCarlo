@@ -71,7 +71,9 @@ classdef SimulationParameters<handle
             [x1,y1] = obj.getMeshGridAtSourcePlane();
             qz = obj.complexBeamParameter;
             k = obj.waveNumber;
-
+            if obj.isFourthOrder
+                k = 2*k;
+            end
 
             if isempty(varargin)
                 Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
@@ -362,10 +364,10 @@ classdef SimulationParameters<handle
                 sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
         end
         function computeStructureConstantSquared(obj)
-            L = obj.propagationDistance;
+            dz = abs(obj.turbulenceRegionEndPosition - obj.turbulenceRegionStartPosition);
             k = obj.waveNumber;
             r0 = obj.totalFriedCoherenceRadiusByStrength;
-            obj.structureConstantSquared = 1/(k^2*L) * (1.435./r0).^(5/3);
+            obj.structureConstantSquared = 1/(k^2*dz) * (1.435./r0).^(5/3);
         end
         function plotConstraint1(obj, params)
             L = obj.propagationDistance;

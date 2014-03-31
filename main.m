@@ -15,7 +15,10 @@ usrIn = UserInput;  % Stores user input information
 pltr = Plotter(ioPaths);    % Stores data source information for later reference
 
 % Ask user to choose simulation type
-usrIn.getSimulationType;
+if usrIn.getSimulationType
+    fprintf('Simulation aborted.\n');
+    return;
+end
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)

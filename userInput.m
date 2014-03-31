@@ -6,11 +6,12 @@ classdef UserInput<handle
     end
     
     methods(Access = public)
-        function getSimulationType(obj)
+        function abort = getSimulationType(obj)
             choice = questdlg('Select simulation type', 'Simulation type', ...
                 'Coincidences with inversion', 'Coincidences without inversion', ...
                 'Intensity', 'Intensity');
-            
+            abort = 0;
+
             switch choice
                 case 'Coincidences with inversion'
                     obj.isFourthOrder = 1;
@@ -21,6 +22,8 @@ classdef UserInput<handle
                 case 'Intensity'
                     obj.isFourthOrder = 0;
                     obj.isInverted = 0;
+                otherwise
+                    abort = 1;
             end
         end 
         function shutdownComputer(obj)
