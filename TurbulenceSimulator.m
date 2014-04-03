@@ -23,16 +23,12 @@ classdef TurbulenceSimulator<handle
         end
     end
     methods(Access = public)
-        function outputField = propagate(obj, phScreen)
+        function outputField = propagate(obj, phScreen, wvl)
             numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
             outputField = zeros(Ny, Nx, numOrders);
             sg = obj.simulationParameters.getSuperGaussianFilter;
             sg = repmat(sg, [1, 1, obj.simulationParameters.numberOfPhasePlanes]);
-            wvl = obj.simulationParameters.wavelength;
-            if obj.simulationParameters.isFourthOrder
-                wvl = wvl/2;
-            end
             z = obj.simulationParameters.planePositions;
             delta1 = obj.simulationParameters.gridSpacingSourcePlane;
             deltan = obj.simulationParameters.gridSpacingObservationPlane;
@@ -44,10 +40,25 @@ classdef TurbulenceSimulator<handle
             end
         end
 
+        function outputField = propagateInputField(obj, Uin, phScreen, wvl)
+            sg = obj.simulationParameters.getSuperGaussianFilter;
+            sg = repmat(sg, [1, 1, obj.simulationParameters.numberOfPhasePlanes]);
+            z = obj.simulationParameters.planePositions;
+            delta1 = obj.simulationParameters.gridSpacingSourcePlane;
+            deltan = obj.simulationParameters.gridSpacingObservationPlane;
+               
+            [~,~, outputField] = ang_spec_multi_prop(Uin, wvl, ...
+                delta1, deltan, z, sg.*exp(1i*phScreen));
+        end
+
         function fieldSep = getFieldForEachTransverseSeparation(obj)
             nSep = obj.numberOfTransverseSeparations;
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
-            
+            wvl = obj.simulationParameters.wavelength;
+            if obj.simulationParameters.isFourthOrder
+                wvl = wvl/2;
+            end 
+
             fieldSep = zeros(Ny, Nx, nSep);
             
             for iSep = 1 : nSep
@@ -57,17 +68,21 @@ classdef TurbulenceSimulator<handle
                 end
                 phScreen = obj.inversionAndDisplacementOperationsOnScreen(iSep);
                 
-                fieldSep(:,:,iSep) = obj.propagate(phScreen);
+                fieldSep(:,:,iSep) = obj.propagate(phScreen, wvl);
             end
         end
 
         function outMode = getFieldForEachMode(obj)
             phz = obj.inversionAndDisplacementOperationsOnScreen();
             [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
-            
+            wvl = obj.simulationParameters.wavelength;
+            if obj.simulationParameters.isFourthOrder
+                wvl = wvl/2;
+            end 
+
             obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
             phScreen = Util.crop(phz, Nx, Ny);
-            outMode = obj.propagate(phScreen);
+            outMode = obj.propagate(phScreen, wvl);
         end
 
         function intGamma = getIrradianceForEachGamma(obj,varargin)
@@ -96,6 +111,122 @@ classdef TurbulenceSimulator<handle
             end
 
             intGamma.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
+        end
+
+        function [psiParity, psiChi2] = getPsiDifferenceParityAndChiSquared(obj)
+            nGamma = length(obj.simulationParameters.gammaStrength);
+            if ~ismember(0, obj.simulationParameters.transverseSeparationInR0Units)
+                obj.simulationParameters.transverseSeparationInR0Units = [0,  obj.simulationParameters.transverseSeparationInR0Units];
+                obj.numberOfTransverseSeparations = obj.numberOfTransverseSeparations + 1;
+            end
+
+            nSep = obj.numberOfTransverseSeparations;
+
+            psiParity = obj.fillPsiParityMetaData();
+            psiParity.values = zeros(nSep,nGamma);
+            psiParity.params = obj.getSimulationParameters();
+
+            psiChi2 = obj.fillPsiChi2MetaData();
+            psiChi2.values = zeros(nSep,nGamma);
+            psiChi2.params = obj.getSimulationParameters();
+
+             for iGamma = 1 : nGamma
+                if obj.isAborted
+                    break;
+                end
+                UserInput.printOutProgress('Turbulence strength', ...
+                    iGamma, nGamma);
+                obj.simulationParameters.gammaCurrentIndex = iGamma;
+                [psiParity.values(:,iGamma), psiChi2.values(:,iGamma)] = obj.getAveragePsiParityAndChi2();
+            end
+
+            psiParity.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
+            psiChi2.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
+
+        end
+
+        function [avgPrt, avgChi2] = getAveragePsiParityAndChi2(obj)
+            obj.abortButtonHandle = UserInput.createWaitBar;
+            try
+                nRe = obj.getNumberOfRealizations;
+                NROI = round(1/4*obj.simulationParameters.regionOfInterestAtObservationPlane / obj.simulationParameters.gridSpacingObservationPlane);
+                wvl = obj.simulationParameters.wavelength;
+                [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
+                
+                prt = zeros(obj.numberOfTransverseSeparations, nRe);
+                chi2 = zeros(obj.numberOfTransverseSeparations, nRe);
+
+                nSep = obj.numberOfTransverseSeparations;
+                vacuumPhase = zeros(Ny, Nx, nSep);
+
+                for iSep = 1 : nSep
+                    Uvac = obj.simulationParameters.getInputPointSource(iSep);
+                    vacuumPhase(:,:,iSep) = angle(obj.propagateInputField(Uvac, 0, wvl));
+                end
+                
+                for iRe = 1 : nRe
+                    obj.isAborted = UserInput.isAborted(obj.abortButtonHandle);
+                    if obj.isAborted
+                        break;
+                    end
+
+                    r0 = obj.simulationParameters.totalFriedCoherenceRadiusByStrength;
+                    if isinf(r0(obj.simulationParameters.gammaCurrentIndex))
+                        nSep = 1;
+                    else
+                        nSep = obj.numberOfTransverseSeparations;
+                    end
+
+                    phScreen = generateScreen(obj.simulationParameters);
+                    Uout0 = obj.propagateInputField(obj.simulationParameters.getInputPointSource(1), phScreen, wvl);
+                    Uout0 = Uout0 .* exp(-1i*vacuumPhase(:,:,1));
+
+                    for iSep = 1 : nSep
+                        
+                        if iSep == 1
+                            Uout = Uout0;
+                        else
+                            Uin = obj.simulationParameters.getInputPointSource(iSep);
+                            Uout = obj.propagateInputField(Uin, phScreen, wvl);
+                            Uout = Uout .* exp(-1i*vacuumPhase(:,:,iSep));
+                        end
+
+                        if obj.simulationParameters.isFourthOrder && obj.simulationParameters.isInverted
+                            Uout = Uout0 .* Util.rot90All(Uout,2);
+                        elseif obj.simulationParameters.isFourthOrder && ~obj.simulationParameters.isInverted
+                            Uout = Uout0 .^ Uout;
+                        end 
+
+                        Ucrop = Util.crop(Uout, NROI, NROI);
+
+                        psiOdd = (Ucrop - Util.rot90All(Ucrop,2))/2;
+                        psiEven = (Ucrop + Util.rot90All(Ucrop,2))/2;
+                        prt(iSep,iRe) = sum( abs(psiOdd(:)).^2)/sum( abs(psiEven(:)).^2);
+
+                        % psiVar = log(Ucrop);
+                        chi2(iSep,iRe) = std(Ucrop(:));
+
+                        if isinf(r0(obj.simulationParameters.gammaCurrentIndex))
+                            prt(:,iRe) = prt(iSep,iRe);
+                            chi2(:,iRe) = chi2(iSep,iRe);
+                        end
+                    end
+                    UserInput.updateWaitBar(obj.abortButtonHandle, iRe, nRe);
+                end
+                avgPrt = mean(prt, 2);
+                avgChi2 = mean(chi2, 2);
+
+                delete(obj.abortButtonHandle);
+                obj.abortButtonHandle = [];
+                
+            catch exception
+                if ~isempty(obj.abortButtonHandle)
+                    delete(obj.abortButtonHandle);
+                    obj.abortButtonHandle = [];
+                end
+                rethrow(exception);
+            end
+
         end
 
         function pwrAndSI = getPowerAndSIOnCircularAperture(obj,apertureRadius,varargin)
@@ -173,7 +304,6 @@ classdef TurbulenceSimulator<handle
 
         function modeParity = getModeParity(obj)
             obj.numberOfTransverseSeparations = 1;
-            [Nx, Ny] = obj.simulationParameters.getTransverseGridSize();
             numOrders = numel(obj.simulationParameters.hermiteGaussOrders);
             if numOrders == 1
                 fprintf('WARNING: Parity simulation is about to be performed with just a single mode.');
@@ -420,6 +550,36 @@ classdef TurbulenceSimulator<handle
             labelZ = 'SI';
             labelLegend = obj.buildLegendCell();
             siStruct.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
+        end
+
+        function psiParity = fillPsiParityMetaData(obj)
+            psiParity = struct;
+            psiParity.columnParams = obj.simulationParameters.gammaStrength;
+            psiParity.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
+            
+            tit = 'Parity ratio of the propagated log irradiance';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in units of r0)';
+            labelZ = 'Parity ratio';
+            labelLegend = obj.buildLegendCell();
+            psiParity.info = struct('title', tit, ...
+                'labelColumn', labelColumn, 'labelRow', labelRow, ...
+                'labelZ', labelZ, 'labelLegend', {labelLegend});
+        end
+
+        function psiParity = fillPsiChi2MetaData(obj)
+            psiParity = struct;
+            psiParity.columnParams = obj.simulationParameters.gammaStrength;
+            psiParity.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
+            
+            tit = 'Chi-squared of the propagated log irradiance';
+            labelColumn = '\gamma';
+            labelRow = 'Separation (in units of r0)';
+            labelZ = 'Chi2';
+            labelLegend = obj.buildLegendCell();
+            psiParity.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
                 'labelZ', labelZ, 'labelLegend', {labelLegend});
         end

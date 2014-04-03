@@ -79,7 +79,7 @@ classdef Plotter<handle
             obj.setPlotInfo(data);
             figure;
             semilogx(x,y, 'LineWidth', 2);
-            grid on;
+            grid minor;
             Plotter.drawPlotInformation(data);
         end
 
@@ -91,6 +91,7 @@ classdef Plotter<handle
                 y = data;
                 x = 1 : length(data);
             end
+
             if length(y) < 2
                 return;
             end
@@ -99,7 +100,7 @@ classdef Plotter<handle
             if size(varargin)==0
                 figure;
                 semilogy(x,y, 'LineWidth', 2);
-                grid on;
+                grid minor;
                 Plotter.drawPlotInformation(data);
                 return;
             end

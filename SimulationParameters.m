@@ -116,20 +116,49 @@ classdef SimulationParameters<handle
             Uout = HG(nx,qz,k,xL) .* HG(ny,qz,k,yL);
         end
 
+        function Uin = getInputPointSource(obj, separationIndex)
+            [x1,y1] = obj.getMeshGridAtSourcePlane();
+            L = obj.propagationDistance;
+            k = obj.waveNumber;
+            iGamma = obj.gammaCurrentIndex;
+            Dwindow = obj.regionOfInterestAtObservationPlane/2;
+            r0 = obj.totalFriedCoherenceRadiusByStrength;
+            r0(isinf(r0)) = 0;
+            xc = obj.transverseSeparationInR0Units(separationIndex) * r0(iGamma);
+
+            arg = k*Dwindow/(2*pi*L);
+            Uin = 2*pi*L/k * exp(-1i*k/(2*L) * (x1.^2 + y1.^2)) .* exp(1i*k/(2*L) * xc^2) .* exp(-1i*k/L * xc * x1) .* ...
+                arg^2 .* sinc(arg*x1) .* sinc(arg*y1);
+        end
+
+        function vacuumPhase = getOutputVacuumPhaseProfile(obj, separationIndex)
+            [xn,yn] = obj.getMeshGridAtObservationPlane;
+            L = obj.propagationDistance;
+            wvl = obj.wavelength;
+            iGamma = obj.gammaCurrentIndex;
+            r0 = obj.totalFriedCoherenceRadiusByStrength(iGamma);
+            r0(isinf(r0)) = 0;
+            xc = obj.transverseSeparationInR0Units(separationIndex) * r0;
+
+            vacuumPhase = exp(-1i*pi/(wvl*L) * ((xn-xc).^2 + yn.^2));
+        end
+
         function [NxEff, NyEff] = getPhaseScreenGridSize(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
-            r0sw = obj.totalFriedCoherenceRadiusByStrength;
-            r0sw(isinf(r0sw)) = 0;
-            r0sw = r0sw(obj.gammaCurrentIndex);
-            maxSep = max(obj.transverseSeparationInR0Units);
-            extraGridLength = maxSep/2 * r0sw/ min(obj.gridSpacingVector);
+            % r0sw = obj.totalFriedCoherenceRadiusByStrength;
+            % r0sw(isinf(r0sw)) = 0;
+            % r0sw = r0sw(obj.gammaCurrentIndex);
+            % maxSep = max(obj.transverseSeparationInR0Units);
+            % extraGridLength = maxSep/2 * r0sw/ min(obj.gridSpacingVector);
             
-            NxEff = Nx + extraGridLength;
-            NyEff = Ny; % Transverse separation only in x direction for now.
+            % NxEff = Nx + extraGridLength;
+            % NyEff = Ny; % Transverse separation only in x direction for now.
             
-            % Get smaller power of 2 numbers that exceed NxEff and NyEff
-            NxEff = 2.^(ceil(log2(NxEff)));
-            NyEff = 2.^(ceil(log2(NyEff)));            
+            % % Get smaller power of 2 numbers that exceed NxEff and NyEff
+            % NxEff = 2.^(ceil(log2(NxEff)));
+            % NyEff = 2.^(ceil(log2(NyEff)));            
+            NxEff = Nx;
+            NyEff = Ny;
         end
 
         function [NxMax, NyMax] = getMaximumScreenGridSize(obj)
@@ -302,7 +331,7 @@ classdef SimulationParameters<handle
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
            obj.regionOfInterestAtSourcePlane = 4*w1;
-           obj.regionOfInterestAtObservationPlane = 4*wn;
+           obj.regionOfInterestAtObservationPlane = 16*wn;
            
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
@@ -346,7 +375,7 @@ classdef SimulationParameters<handle
             g = obj.gammaStrength';
             k = obj.waveNumber;
                         
-            zmask = (z > zmin & z < zmax);
+            zmask = (z >= zmin & z <= zmax);
             ztmin_idx = find(zmask, 1, 'first');
             ztmax_idx = find(zmask, 1, 'last');
             s = sum((1-z(ztmin_idx:ztmax_idx)/L).^(5/3));
@@ -459,7 +488,7 @@ classdef SimulationParameters<handle
             D1p = params.effectiveSourceROI;
             D2p = params.effectiveObsROI;
             
-            Nmin = (wvl*L + D1p*deltan + D2p*delta1)./ (2*delta1 .* deltan);
+            Nmin = (wvl*L + D1p*deltan + D2p*delta1)/ (2*delta1 * deltan);
 
             fail2 = (N <= Nmin);
             fprintf('Constraint 2: ');
