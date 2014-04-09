@@ -339,6 +339,10 @@ classdef SimulationParameters<handle
         end
         function [w1, wn] = getBeamWidthsAtSourceAndObservationPlanes(obj)
             k = 2*pi/obj.wavelength;
+            if obj.isFourthOrder
+                k = 2*k;
+            end
+            
             L = obj.propagationDistance;
             
             if obj.isWaistAtSourcePlane
@@ -353,6 +357,9 @@ classdef SimulationParameters<handle
             w1 = obj.waistAtSourcePlane;
             wn = obj.waistAtObservationPlane;
             k = obj.waveNumber;
+            if obj.isFourthOrder
+                k = 2*k;
+            end
             L = obj.propagationDistance;
 
             if obj.isWaistAtSourcePlane
@@ -382,8 +389,8 @@ classdef SimulationParameters<handle
             
             r0 = (0.423 * k^2/(2.601 * L^(5/3) * s) * g.^(5/3)).^(-3/5);
             r0 = repmat(r0, 1, npl);
-            r0 = r0 .* repmat(zmask, length(g), 1);
-            r0(isinf(1./r0)) = inf;
+            r0(isinf(1./r0)) = 1e-5;
+            r0(~repmat(zmask, length(g), 1)) = inf;
             r0(isnan(r0)) = inf;
             
             obj.friedCoherenceRadiusMatrix = r0;
