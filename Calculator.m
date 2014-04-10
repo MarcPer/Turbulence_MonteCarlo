@@ -85,22 +85,23 @@ classdef Calculator
             end
             
             pwrSlit = struct;
-            pwrSlit.data.columnParams = simParams.gammaStrength;
-            pwrSlit.data.rowParams = simParams.transverseSeparationInR0Units;
+            pwrSlit.columnParams = simParams.gammaStrength;
+            pwrSlit.rowParams = simParams.transverseSeparationInR0Units;
             
             if simParams.isFourthOrder
-                pwrSlit.data.values = Calculator.coincidenceSlitIntegratePx(intProfile, apertureDiamPx);
+                pwrSlit.values = Calculator.coincidenceSlitIntegratePx(intProfile, apertureDiamPx);
             else
-                pwrSlit.data.values = Calculator.intensitySlitIntegratePx(intProfile, apertureDiamPx);
+                pwrSlit.values = Calculator.intensitySlitIntegratePx(intProfile, apertureDiamPx);
             end
             
             tit = 'Power over circular aperture vs Turbulence Strength';
             labelColumn = '\gamma';
             labelRow = 'Separation (in r0)';
             labelZ = 'Power through circular aperture';
+            dt = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             pwrSlit.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ);
+                'labelZ', labelZ, 'date', dt);
             
         end
 
@@ -233,6 +234,7 @@ classdef Calculator
             c0 = repmat(c0, [1 numCells]);
             coincSlitPwr = coincSlitPwr ./ c0;
         end
+
         function singSlitPwr = intensitySlitIntegratePx(intProfile, slitWidth)
             %intensitySlitIntegratePx Integrates array over a slit of width 'a' 
             % (in pixels) with itself.
@@ -263,7 +265,7 @@ classdef Calculator
                 end
                 
                 % Center slit function horizontally on maximum element of 'A'
-                [~, xSlit] = max(slit);
+                xSlit = ceil(slitWidth/2);
                 
                 slit = repmat(slit, [hght(iCell), 1, numSeps(iCell)]);
                 slit = Util.displace(slit, colMax(iCell,:)-xSlit, 0);
@@ -272,10 +274,12 @@ classdef Calculator
                     slit .* intProfile{iCell}, 2), 1);
                 
             end
+            % Normalization
             s0 = singSlitPwr(:,1);
             s0 = repmat(s0, [1 numCells]);
             singSlitPwr = singSlitPwr ./ s0;
         end 
+
         function [hght, wdth, numSep] = getSize(A)
             if ~iscell(A)
                 A = {A};
