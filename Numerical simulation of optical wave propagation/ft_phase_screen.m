@@ -11,7 +11,7 @@ function phz = ft_phase_screen(r0, N, delta, L0, l0)
     fm = 5.92/l0/(2*pi); % inner scale frequency [1/m]
     f0 = 1/L0;           % outer scale frequency [1/m]
     % modified von Karman atmospheric phase PSD
-    PSD_phi = 0.023*r0^(-5/3) * exp(-(f/fm).^2) ...
+    PSD_phi = 0.025*r0^(-5/3) * exp(-(f/fm).^2) ...
         ./ (f.^2 + f0^2).^(11/6);
     PSD_phi(N/2+1,N/2+1) = 0;
     % random draws of Fourier coefficients
