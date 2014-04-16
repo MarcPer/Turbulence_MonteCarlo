@@ -153,10 +153,10 @@ classdef TurbulenceSimulator<handle
                 wvl = obj.simulationParameters.wavelength;
                 [Nx, Ny] = obj.simulationParameters.getTransverseGridSize;
                 
-                prt = zeros(obj.numberOfTransverseSeparations, nRe);
-                chi2 = zeros(obj.numberOfTransverseSeparations, nRe);
-
                 nSep = obj.numberOfTransverseSeparations;
+                prt = zeros(nSep, nRe);
+                chi2 = zeros(nSep, nRe);
+
                 vacuumPhase = zeros(Ny, Nx, nSep);
 
                 for iSep = 1 : nSep
@@ -556,11 +556,11 @@ classdef TurbulenceSimulator<handle
 
         function psiParity = fillPsiParityMetaData(obj)
             psiParity = struct;
-            psiParity.columnParams = obj.simulationParameters.gammaStrength;
+            psiParity.columnParams = obj.simulationParameters.structureConstantSquared;
             psiParity.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
             
             tit = 'Parity ratio of the propagated log irradiance';
-            labelColumn = '\gamma';
+            labelColumn = 'C_n^2';
             labelRow = 'Separation (in units of r0)';
             labelZ = 'Parity ratio';
             labelLegend = obj.buildLegendCell();

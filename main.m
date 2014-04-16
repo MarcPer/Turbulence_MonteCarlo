@@ -24,7 +24,7 @@ end
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 2;
+usrIn.enumShutdown = 0;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
@@ -45,9 +45,9 @@ clear simParams;
 try
     % apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
     % pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
-    % [psiParity, psiChi2] = turbSimulator.getPsiDifferenceParityAndChiSquared;
-    pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
-    slitPwr = Calculator.computePowerThroughSlit(pwrGamma.values, turbSimulator.simulationParameters);
+    [psiParity, psiChi2] = turbSimulator.getPsiDifferenceParityAndChiSquared;
+    % pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
+    % slitPwr = Calculator.computePowerThroughSlit(pwrGamma.values, turbSimulator.simulationParameters);
     % modeMatching = turbSimulator.getModeMatching;
     % parity = turbSimulator.getModeParity;
 catch exception
@@ -69,17 +69,17 @@ end
 close all;
 
 try
-    pltr.plotIntensityProfilesForEachGamma(pwrGamma);
-    pltr.plot2D(slitPwr);
+    % pltr.plotIntensityProfilesForEachGamma(pwrGamma);
+    % pltr.plot2D(slitPwr);
     % pltr.plot2D(pwrAndSI{1});
     % pltr.plot2D(pwrAndSI{2});
     % pltr.plotBars(parity);
     % pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
-    % pltr.plotSemiLogY(psiParity);
+    pltr.plotLogLog(psiParity);
     % pltr.plot2D(psiChi2);
         
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, slitPwr, usrIn, turbSimulator.simulationParameters, 'slitPwr');
+    Exporter.exportToDisk(ioPaths, psiParity, usrIn, turbSimulator.simulationParameters, 'psiParity');
     % Exporter.exportToDisk(ioPaths, psiChi2, usrIn, turbSimulator.simulationParameters, 'psiChi2');
 catch exception
     % SHUTDOWN COMPUTER?

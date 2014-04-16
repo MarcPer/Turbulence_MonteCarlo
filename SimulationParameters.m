@@ -182,7 +182,6 @@ classdef SimulationParameters<handle
             L = obj.propagationDistance;
             wvl = obj.wavelength;
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
-            r0sw(isinf(r0sw)) = NaN;
 
             [nx, ny] = Util.getMaximumHermiteGaussOrders(obj.hermiteGaussOrders);
 
@@ -330,8 +329,8 @@ classdef SimulationParameters<handle
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 4*w1;
-           obj.regionOfInterestAtObservationPlane = 16*wn;
+           obj.regionOfInterestAtSourcePlane = 16*w1;
+           obj.regionOfInterestAtObservationPlane = 10*wn;
            
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
@@ -400,10 +399,20 @@ classdef SimulationParameters<handle
                 sum(r0.^(-5/3) .* aux_mat.^(5/3), 2).^(-3/5);
         end
         function computeStructureConstantSquared(obj)
-            dz = abs(obj.turbulenceRegionEndPosition - obj.turbulenceRegionStartPosition);
             k = obj.waveNumber;
+            L = obj.propagationDistance;
+            z = obj.planePositions;
             r0 = obj.totalFriedCoherenceRadiusByStrength;
-            obj.structureConstantSquared = 1/(k^2*dz) * (1.435./r0).^(5/3);
+            zmin = obj.turbulenceRegionStartPosition;
+            zmax = obj.turbulenceRegionEndPosition;
+            dz = abs(z(2)-z(1));
+
+            zmask = (z >= zmin & z <= zmax);
+            ztmin_idx = find(zmask, 1, 'first');
+            ztmax_idx = find(zmask, 1, 'last');
+            s = sum((z(ztmin_idx:ztmax_idx)/L).^(5/3));
+
+            obj.structureConstantSquared = r0.^(-5/3)/(0.423 * k^2 * dz * s);
         end
         function plotConstraint1(obj, params)
             L = obj.propagationDistance;
