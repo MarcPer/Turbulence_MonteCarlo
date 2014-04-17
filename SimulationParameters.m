@@ -257,11 +257,21 @@ classdef SimulationParameters<handle
 		
 		fail = (fail1 || fail2 || fail3 || fail4);
         end
-        function setPointDetectorAtObservationPlane(obj,isPointDtc)
+        function apertureRadius = setPointDetectorAtObservationPlane(obj,isPointDtc)
+            apertureRadius = NaN;
             if isPointDtc
                 r0 = obj.totalFriedCoherenceRadiusByStrength;
                 r0 = ~isinf(r0) .* r0;
-                obj.regionOfInterestAtObservationPlane = r0;
+                if min(r0) < obj.gridSpacingObservationPlane
+                    fprintf('WARNING: Point detector condition not satisfied for strongest turbulence.\n');
+                    fprintf('Setting detector area to 1 pixel.\n');
+                    beep();
+                    apertureRadius = obj.gridSpacingObservationPlane;
+                    obj.regionOfInterestAtObservationPlane = 4*apertureRadius;
+                    return;
+                end
+                apertureRadius = min(r0);
+                obj.regionOfInterestAtObservationPlane = 4*min(r0);
             end
         end
     end
@@ -329,7 +339,7 @@ classdef SimulationParameters<handle
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 16*w1;
+           obj.regionOfInterestAtSourcePlane = 4*w1;
            obj.regionOfInterestAtObservationPlane = 10*wn;
            
            obj.computeGammaStrength();

@@ -527,11 +527,11 @@ classdef TurbulenceSimulator<handle
         function pwrStruct = fillCircularApertureMetaData(obj)
             pwrStruct = struct;
             simParams = obj.simulationParameters;
-            pwrStruct.columnParams = simParams.gammaStrength;
+            pwrStruct.columnParams = simParams.structureConstantSquared;
             pwrStruct.rowParams = simParams.transverseSeparationInR0Units;
             
             tit = 'Power Over Circular Aperture';
-            labelColumn = '\gamma';
+            labelColumn = 'C_n^2';
             labelRow = 'Separation (in units of r0)';
             labelZ = 'Power';
             labelLegend = obj.buildLegendCell();
@@ -541,11 +541,11 @@ classdef TurbulenceSimulator<handle
         end
         function siStruct = fillScintillationIndexOnCircularApertureMetaData(obj)
             siStruct = struct;
-            siStruct.columnParams = obj.simulationParameters.gammaStrength;
+            siStruct.columnParams = obj.simulationParameters.structureConstantSquared;
             siStruct.rowParams = obj.simulationParameters.transverseSeparationInR0Units;
             
             tit = 'Scintillation Index on Circular Aperture';
-            labelColumn = '\gamma';
+            labelColumn = 'C_n^2';
             labelRow = 'Separation (in units of r0)';
             labelZ = 'SI';
             labelLegend = obj.buildLegendCell();

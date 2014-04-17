@@ -24,12 +24,12 @@ end
 
 % Shutdown computer at the end of the script?
 %   (0 = NO, 1 = SHUTDOWN, 2 = HIBERNATE)
-usrIn.enumShutdown = 0;
+usrIn.enumShutdown = 2;
 
 %% SETUP AND SIMULATION PARAMETERS
 % Setup geometry
 simParams = SimulationParameters(ioPaths,'FourthOrder', usrIn.isFourthOrder, 'Inverted', usrIn.isInverted);
-simParams.setPointDetectorAtObservationPlane(false);
+apertureRadius = simParams.setPointDetectorAtObservationPlane(true);
 constraintReturnCode = simParams.constraintAnalysis;
 
 isAbort = usrIn.abortWhenConstraintFail(constraintReturnCode, usrIn.enumShutdown);
@@ -44,8 +44,8 @@ clear simParams;
 %% RUN SIMULATION
 try
     % apertureRadius = turbSimulator.simulationParameters.gridSpacingObservationPlane;
-    % pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
-    [psiParity, psiChi2] = turbSimulator.getPsiDifferenceParityAndChiSquared;
+    pwrAndSI = turbSimulator.getPowerAndSIOnCircularAperture(apertureRadius,'Normalized', true);
+    % [psiParity, psiChi2] = turbSimulator.getPsiDifferenceParityAndChiSquared;
     % pwrGamma = turbSimulator.getIrradianceForEachGamma('Normalized', true);
     % slitPwr = Calculator.computePowerThroughSlit(pwrGamma.values, turbSimulator.simulationParameters);
     % modeMatching = turbSimulator.getModeMatching;
@@ -72,15 +72,15 @@ try
     % pltr.plotIntensityProfilesForEachGamma(pwrGamma);
     % pltr.plot2D(slitPwr);
     % pltr.plot2D(pwrAndSI{1});
-    % pltr.plot2D(pwrAndSI{2});
+    pltr.plotLogLog(pwrAndSI{2});
     % pltr.plotBars(parity);
     % pltr.plot2D(Calculator.computeErrorRateVsRelativeLengths(parity));
-    pltr.plotLogLog(psiParity);
+    % pltr.plotLogLog(psiParity);
     % pltr.plot2D(psiChi2);
         
     % EXPORT RESULTS (only if simulation was completed)
-    Exporter.exportToDisk(ioPaths, psiParity, usrIn, turbSimulator.simulationParameters, 'psiParity');
-    % Exporter.exportToDisk(ioPaths, psiChi2, usrIn, turbSimulator.simulationParameters, 'psiChi2');
+    Exporter.exportToDisk(ioPaths, pwrAndSI{2}, usrIn, turbSimulator.simulationParameters, 'ScintIdx');
+    % Exporter.exportToDisk(ioPaths, psiParity, usrIn, turbSimulator.simulationParameters, 'psiParity');
 catch exception
     % SHUTDOWN COMPUTER?
     usrIn.shutdownComputer;
