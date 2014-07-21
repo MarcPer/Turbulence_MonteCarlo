@@ -15,7 +15,7 @@ classdef Calculator
     end
     
     methods(Static)
-        function pwrSlit = computePowerThroughSlit(intProfile, simParams)
+        function pwrSlit = computePowerThroughSlit(intProfile, turbSimulator)
         % computePowerThroughSlit returns power for each gamma and
         % separation.
         %
@@ -31,6 +31,8 @@ classdef Calculator
         % intProfile: Cell (indexed by Gamma), each element consisting of
         % an array indexed as [profile row, profile column, separation]
         % simParams: Instance of SimulationParameters
+            
+            simParams = turbSimulator.simulationParameters;
             slitWidthPx = round(simParams.slitWidth / ...
                 simParams.gridSpacingObservationPlane);
             if (slitWidthPx == 0)
@@ -42,6 +44,7 @@ classdef Calculator
             pwrSlit = struct;
             pwrSlit.columnParams = simParams.gammaStrength;
             pwrSlit.rowParams = simParams.transverseSeparationInR0Units;
+            pwrSlit.params = turbSimulator.getSimulationParameters;
             
             if simParams.isFourthOrder
                 pwrSlit.values = Calculator.coincidenceSlitIntegratePx(intProfile, slitWidthPx);
@@ -272,8 +275,8 @@ classdef Calculator
                                 
                 singSlitPwr(:,iCell) = sum( sum( ...
                     slit .* intProfile{iCell}, 2), 1);
-                
             end
+            
             % Normalization
             s0 = singSlitPwr(:,1);
             s0 = repmat(s0, [1 numCells]);

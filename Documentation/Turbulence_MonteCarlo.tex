@@ -24,7 +24,7 @@
 \begin{document}
   \maketitle 
 \begin{abstract}
-This document describes some of the theory behind simulations performed in this project.
+This document describes some of the theory behind simulations performed in this project and discusses the sampling constraints that ought to be verified in order for the results to be valid.
 \end{abstract}
 
 \section{From Fourth to Second-Order Simulation}
@@ -79,4 +79,28 @@ If we choose detectors $1$ and $2$ to be positioned at $\rho_1=\rho+\frac{a}{2}$
 n_p(\rho^{\prime\prime},z^\prime)= n_1\left(\rho^{\prime\prime}+\frac{a}{2}, z^\prime\right) + n_1\left(-\rho^{\prime\prime}+\frac{a}{2},z^\prime\right) \; .
 \end{equation}
 
+\section{Sampling requirements}
+There are three constraints that need to be satisfied to ensure the simulated results accurately represent the corresponding physical scenario. These are:
+\begin{subequations}
+\begin{align}
+\delta_n &\leq \frac{\lambda L - D'_n \delta_1}{D'_1} \; ,\\
+N &\geq \frac{D'_1}{2\delta_1}+\frac{D'_n}{2\delta_n} + \frac{\lambda L}{2\delta_1\delta_n} \; ,\\
+\left( 1+\frac{L}{R}\right) \delta_1 -\frac{\lambda L}{D'_1} & \leq \delta_n \leq  \left( 1+\frac{L}{R}\right) \delta_1 + \frac{\lambda L}{D'_1} \; ,
+\end{align}
+\end{subequations}
+where $L$ is the total propagation distance, $R$ is the beam curvature on the source plane, $\lambda$ its wavelength, $N$ is the number os samples taken on each plane in one dimension (that is, grids of size $N\,\times\,N$ are taken), $\delta_1$ and $\delta_n$ are the grid spacing on the source and observation planes and $D'_1$ and $D'_n$ are the linear dimensions of the region of interest on the source and observation planes, respectively, with broadening and blurring caused by atmospheric turbulence taken into account. The turbulence effect is included by adding a term to the actual regions of interest $D_1$ and $D_n$, as follows:
+\begin{subequations}
+\begin{align}
+D_1' &= D_1 +c\frac{\lambda L}{r_{0,rev}} \; , \\
+D_n' &= D_n +c\frac{\lambda L}{r_0} \; .
+\end{align}
+\end{subequations}
+The terms $r_0$ and $r_{0,rev}$ are the turbulence coherence diameters as seen from the observation plane and the source plane with counter-propagating light, respectively. These are equal when turbulence is homogeneous, that is, when the structure constant $C_n$ does not depend on the distance $z$ along the propagation axis $Z$. The parameter $c$ is chosen according to what fraction of the emitted light is to impinge in the region of interest. For instance, $c=2$ typically corresponds to about 97$\%$ of captured light while $c=4$ gives $\sim$99$\%$.
+
+Once $N$, $\delta_1$ and $\delta_n$ are chosen, the maximum partial propagation distance should be the following:
+\begin{equation}
+\Delta z_{max} = \frac{ \left[ \mathrm{min}(\delta_1,\delta_n)\right]^2 N}{\lambda} \; .
+\end{equation}
+
+All constraints come from a single numerical requirement: Shannon-Nyquist sampling theorem.
 \end{document}

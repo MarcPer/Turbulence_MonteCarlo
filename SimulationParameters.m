@@ -340,7 +340,7 @@ classdef SimulationParameters<handle
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
            obj.regionOfInterestAtSourcePlane = 4*w1;
-           obj.regionOfInterestAtObservationPlane = 10*wn;
+           obj.regionOfInterestAtObservationPlane = 4*wn;
            
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();

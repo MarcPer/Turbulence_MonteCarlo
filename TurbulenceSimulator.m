@@ -327,6 +327,13 @@ classdef TurbulenceSimulator<handle
                 modeParity{iGamma}.info.date = [datestr(date, 'yyyy-mm-dd'), '_', datestr(clock, 'HHMMSS')];
             end
         end
+
+        function params = getSimulationParameters(obj)
+            simParams = fieldnames(obj.simulationParameters);
+            for p = 1 : numel(simParams)
+                params.(simParams{p}) = obj.simulationParameters.(simParams{p});
+            end
+        end
     end
 
     methods(Access = private)
@@ -636,12 +643,7 @@ classdef TurbulenceSimulator<handle
                 leg{i} = sprintf('%2.2g r0',sep(i));
             end
         end
-        function params = getSimulationParameters(obj)
-            simParams = fieldnames(obj.simulationParameters);
-            for p = 1 : numel(simParams)
-                params.(simParams{p}) = obj.simulationParameters.(simParams{p});
-            end
-        end
+        
         function setFreeSpaceConditions(obj)
             if ~ismember(0, obj.simulationParameters.gammaStrength)
                 obj.simulationParameters.gammaStrength = ...
