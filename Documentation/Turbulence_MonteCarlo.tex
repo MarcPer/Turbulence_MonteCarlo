@@ -83,10 +83,11 @@ n_p(\rho^{\prime\prime},z^\prime)= n_1\left(\rho^{\prime\prime}+\frac{a}{2}, z^\
 There are three constraints that need to be satisfied to ensure the simulated results accurately represent the corresponding physical scenario. These are:
 \begin{subequations}
 \begin{align}
-\delta_n &\leq \frac{\lambda L - D'_n \delta_1}{D'_1} \; ,\\
-N &\geq \frac{D'_1}{2\delta_1}+\frac{D'_n}{2\delta_n} + \frac{\lambda L}{2\delta_1\delta_n} \; ,\\
+\delta_n &\leq \frac{\lambda L - D'_n \delta_1}{D'_1} \; , \label{constraint1} \\
+N &\geq \frac{D'_1}{2\delta_1}+\frac{D'_n}{2\delta_n} + \frac{\lambda L}{2\delta_1\delta_n} \; , \label{constraint2} \\
 \left( 1+\frac{L}{R}\right) \delta_1 -\frac{\lambda L}{D'_1} & \leq \delta_n \leq  \left( 1+\frac{L}{R}\right) \delta_1 + \frac{\lambda L}{D'_1} \; ,
 \end{align}
+\label{constraints1to3}
 \end{subequations}
 where $L$ is the total propagation distance, $R$ is the beam curvature on the source plane, $\lambda$ its wavelength, $N$ is the number os samples taken on each plane in one dimension (that is, grids of size $N\,\times\,N$ are taken), $\delta_1$ and $\delta_n$ are the grid spacing on the source and observation planes and $D'_1$ and $D'_n$ are the linear dimensions of the region of interest on the source and observation planes, respectively, with broadening and blurring caused by atmospheric turbulence taken into account. The turbulence effect is included by adding a term to the actual regions of interest $D_1$ and $D_n$, as follows:
 \begin{subequations}
@@ -100,7 +101,58 @@ The terms $r_0$ and $r_{0,rev}$ are the turbulence coherence diameters as seen f
 Once $N$, $\delta_1$ and $\delta_n$ are chosen, the maximum partial propagation distance should be the following:
 \begin{equation}
 \Delta z_{max} = \frac{ \left[ \mathrm{min}(\delta_1,\delta_n)\right]^2 N}{\lambda} \; .
+\label{constraint4}
+\end{equation}
+This in turn is associated with a constraint on the minimum number of propagation planes (source and observation planes included):
+\begin{equation}
+n_{min} = \left\lceil \frac{L}{\Delta z_{max}} \right\rceil + 1 \; .
 \end{equation}
 
-All constraints come from a single numerical requirement: Shannon-Nyquist sampling theorem.
+We now derive each of the four constraints \eqref{constraints1to3} and \eqref{constraint4}.
+
+\subsection{Constraints 1 and 2}
+The constraints described in equations \eqref{constraint1} and \eqref{constraint2} arise from geometric considerations. Given the regions of interest $D_1$ and $D_n$ in, respectively, the source plane $\Pi_1$ and observation plane $\Pi_n$, one has to consider any ray coming from within $D_1$ that might impinge on $D_n$. Among these, the rays propagating from one extreme of $D_1$ to the opposite extreme of $D_n$ are associated with the highest angle $\theta_{max}$ with respect to the propagation axis $Z$ and hence to the largest relevant transverse momentum component $Q_{max}=k\theta_{max}$, where $k=2\pi/\lambda$ is the beam wavenumber.
+
+Now, according to the Fresnel propagation integral, the output field $U_n(\vect{\rho})$ relates to its input $U_1(\vect{\rho}')$ as follows:
+\begin{equation}
+U_n(\vect{\rho}) = \frac{k e^{ikL}}{2i\pi L} e^{i\frac{k}{2L}\rho^2} \mathcal F \left[\vect{\rho}', \vect{q}=\frac{\rho}{\lambda L} \right] \left\{ U_1(\vect{\rho}') e^{i\frac{k}{2L}\rho'^2} \right\} \; .
+\end{equation}
+The operator and operand notation $\mathcal F[\vect{\rho},\vect{q}]\{ f(\vect{\rho}) \}$ represents a two-dimensional Fourier transform of the function $f$ from variable $\vect{\rho}$ to $\vect{q}$. Thus, the source of all rays originating from $\Pi_1$ is effectively the field given by $U_1(\vect{\rho}') e^{i\frac{k}{2L}\rho'^2}$, the operand of the Fourier transform. A particular ray can then be represented by a plane wave with transverse momentum $\vect{Q} = \vect{q} + \vect{q}_0(\vect{\rho}')$, where $\vect{q}$ is one component of the input field's angular spectrum and $\vect{q}_0(\vect{\rho}')$ is the local wavevector stemming from $\exp \left[i\frac{k}{2L}\rho'^2\right]$ and given by:
+\begin{equation}
+\left[\vect{q}_{0}\right]_i = \frac{k}{2L} \frac{\partial \rho'^2}{\partial \rho'_i} = \frac{k\rho'_i}{L} \; .
+\end{equation}
+In particular, for a ray propagating from edge of $D_1$ to the opposite edge in $D_n$ we have a local transverse wavevector of (in the following analysis we focus on a single transverse component)
+\begin{equation}
+q_0\left(D_1/2\right) = \frac{kD_1}{2L} \; .
+\end{equation}
+
+From figure , one can see that the maximum ray angle is
+\begin{equation}
+\theta_{max} = \frac{D_1+D_n}{2L} \; ,
+\end{equation}
+so we have
+\begin{align}
+q_{max} &= Q_{max} - q_{0\,max} \notag \\
+&= k\frac{D_1+D_n}{2L} - k\frac{D_1}{2L} \notag \\
+&= \frac{k D_n}{2L} \; .
+\end{align}
+
+Because the largest transverse momentum component from the input field $U_1$ affecting the observed field is given by $q_{max}$, the Nyquist criterion dictates the source plane must be sampled at a frequency at least as high as $2\times 2\pi/q_{max}$. That is, the distance $\delta_1$ between sampled points in the source plane must satisfy
+\begin{equation}
+\delta_1 q_{max} \leq \pi \; ,
+\end{equation}
+which leads to
+\begin{equation}
+\delta_1 \leq \frac{\lambda L}{D_n} \; . \label{delta1}
+\end{equation}
+
+This criterion prevents what is termed aliasing, an effect by which high spatial frequency components are not properly captured by the sampling procedure. Figure illustrates such an effect: because of a low-sampling frequency, the original signal (black curve) cannot be distinguished from another with smaller spatial frequency (blue curve). The latter is then an alias for the true signal.
+
+Analogously, a properly represented output field will contain sample points spaced closely enough to capture the highest of the relevant spatial frequencies:
+\begin{equation}
+\delta_n \leq \frac{\lambda L}{D_1} \; \label{deltan} \; .
+\end{equation}
+Equations \eqref{delta1} and \eqref{deltan} form together the constraint \eqref{constraint1}.
+
+Because the output and input fields are related to each other via a Fourier series (since we need to discretize the Fourier transform), the actual input function becomes a periodic version of the field inside $D_1$. In order to prevent that the repeated versions of the input signal at each of its sides generate a ray that might impinge on $D_n$, the repetition period must be made large enough. 
 \end{document}
