@@ -50,13 +50,14 @@ classdef SimulationParameters<handle
        
     methods(Access = public)
         function simParams = SimulationParameters(ioPath,varargin)
-           simParams.gammaCurrentIndex = 1;
-           simParams.checkIfFourthOrderAndInverted(varargin);
-           fData = ioPath.openParametersFile();
-           simParams.readParameters(fData);
-           simParams.checkConflictingInputParameters;
-           simParams.setDefaultValueForBlankParameters();
-           simParams.computeDerivedQuantities();
+            addpath('jsonlab/');
+            simParams.gammaCurrentIndex = 1;
+            simParams.checkIfFourthOrderAndInverted(varargin);
+            fData = ioPath.openParametersFile();
+            simParams.readParameters(fData);
+            simParams.checkConflictingInputParameters;
+            simParams.setDefaultValueForBlankParameters();
+            simParams.computeDerivedQuantities();
         end
         
         function sg = getSuperGaussianFilter(obj)

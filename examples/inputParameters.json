@@ -1,0 +1,23 @@
+{
+	"propagationDistance": 2000,
+	"numberOfPhasePlanes":   20,
+	"turbulenceRegionStartPosition":    0,
+	"turbulenceRegionEndPosition": 2000,
+	"slitWidth": 0.042,
+	"circularApertureRadius": null,
+
+	"gammaRaw": [0, 2e3, 5e3, 7.5e3, 1e4, 1.3e4, 1.5e4, 1.7e4, 1.75e4, 1.8e4, 1.85e4, 1.9e4],
+	"outerScale":  "_Inf_",
+	"innerScale":    0,
+
+	"wavelength": 1550e-9,
+	"waistAtSourcePlane": 0.05,
+	"waistAtObservationPlane": null,
+	"hermiteGaussOrders": 00,
+
+	"numberOfRealizations":  300,
+	"transverseGridSize": 256,
+	"gridSpacingSourcePlane": 0.00321,
+	"gridSpacingObservationPlane": 0.0038182,
+	"transverseSeparationInR0Units":   0
+}
