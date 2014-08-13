@@ -1,4 +1,7 @@
 {
+	"isFourthOrder": 1,
+	"isInverted": 1,
+	
 	"propagationDistance": 2000,
 	"numberOfPhasePlanes":   20,
 	"turbulenceRegionStartPosition":    0,
