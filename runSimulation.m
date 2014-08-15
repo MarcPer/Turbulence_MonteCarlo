@@ -2,6 +2,7 @@ clear; close all;
 set(0,'ShowHiddenHandles','on');
 delete(get(0,'Children'));
 addpath('jsonlab');
+addpath('propagation_routines');
 
 inputFile = ConfigHelper.getInputParametersFile;
 ConfigHelper.setOutputFolder;
@@ -22,3 +23,5 @@ catch exception
     delete(get(0,'Children'))
     rethrow(exception);
 end
+
+Exporter.exportToDisk(results, simParams, inputFile);

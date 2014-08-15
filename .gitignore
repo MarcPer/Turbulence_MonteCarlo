@@ -236,3 +236,5 @@ pip-log.txt
 ## Project-specific
 ######################
 turbSimulatorConfig.json
+*.mat
+*.dat

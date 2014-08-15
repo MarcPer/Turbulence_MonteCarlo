@@ -50,6 +50,7 @@ classdef UserInput
             if ~fail
                 fprintf('Press any key to continue...\n');
                 pause;
+                close all;
                 return
             end
             switch( questdlg('Abort?','Constraint analysis failed', 'Yes', 'No', 'Yes'));

@@ -25,8 +25,7 @@ classdef TurbulenceSimulator<handle
         function results = simulate(obj)
             switch obj.simulationParameters.simulationType
                 case 'PSIPARITY'
-                    results = 'Test';
-                    %[results, ~] = obj.getPsiDifferenceParityAndChiSquared;
+                    [results, ~] = obj.getPsiDifferenceParityAndChiSquared;
                 case 'PSICHI2'
                     [~, results] = obj.getPsiDifferenceParityAndChiSquared;
                 case 'IRRADIANCE'

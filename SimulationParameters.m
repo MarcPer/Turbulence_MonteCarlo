@@ -210,6 +210,7 @@ classdef SimulationParameters<handle
             D1p = sqrt(max(nx,ny)+1)*D1p;
             D2p = sqrt(max(nx,ny)+1)*D2p;
         end
+
         function [deltaX, deltaY] = getTransverseSeparationInPixels(obj, sepIndex)
             r0sw = obj.totalFriedCoherenceRadiusByStrength;
             r0sw(isinf(r0sw)) = 0;
@@ -218,26 +219,31 @@ classdef SimulationParameters<handle
             deltaX = round(sep * r0sw ./ obj.gridSpacingVector); 
             deltaY = round(sep * r0sw ./ obj.gridSpacingVector);
         end
+
         function [Nx, Ny] = getTransverseGridSize(obj)
             Nx = obj.transverseGridSize;
             Ny = obj.transverseGridSize;
         end
+
         function [x1, y1] = getMeshGridAtSourcePlane(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
             delta1 = obj.gridSpacingSourcePlane;
             [x1,y1] = meshgrid((-Nx/2 : Nx/2-1) * delta1, ...
                 (-Ny/2 : Ny/2-1) * delta1);
         end
+
         function [xn, yn] = getMeshGridAtObservationPlane(obj)
             [Nx, Ny] = obj.getTransverseGridSize;
             deltan = obj.gridSpacingObservationPlane;
             [xn,yn] = meshgrid((-Nx/2 : Nx/2-1) * deltan, ...
                 (-Ny/2 : Ny/2-1) * deltan);
         end
+
         function circ = getCircularApertureArray(obj, apertureRadius)
             [xn, yn] = obj.getMeshGridAtObservationPlane;
             circ = ( xn.^2 + yn.^2 <= apertureRadius^2);
         end
+
 		function fail = constraintAnalysis(obj)
         [D1p, D2p] = obj.getEffectiveROI;
         
@@ -260,6 +266,7 @@ classdef SimulationParameters<handle
 		
 		fail = (fail1 || fail2 || fail3);
         end
+        
         function apertureRadius = setPointDetectorAtObservationPlane(obj,isPointDtc)
             apertureRadius = NaN;
             if isPointDtc

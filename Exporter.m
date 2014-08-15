@@ -5,25 +5,21 @@ classdef Exporter
     end
     
     methods(Static)
-        function exportToDisk(ioPaths,data,userInput,simParams,varargin)
-            if isempty(varargin)
-                fileName = Exporter.getFullFilename(data, ioPaths, 'dat');
-            else
-                fileName = Exporter.getFullFilename(data, ioPaths, 'dat', varargin{1});
-            end
+        function exportToDisk(results, simParams, inputFile)
+            fileName = Exporter.getFullFilename(results, simParams.simulationType);
             fid = Exporter.getFileId(fileName);
 
-            Exporter.saveMatlabFile(fileName, data);
+            save(fileName, 'results');
             try
-                for i = 1 : length(data)
-                    Exporter.writeTitle(fid, Exporter.getDataSet(data,i));
-                    Exporter.writeSimulationType(fid,userInput);
-                    Exporter.saveHeader(fid, Exporter.getDataSet(data,i));
-                    Exporter.saveDataArray(fid, Exporter.getDataSet(data,i));
-                    Exporter.saveFigure(ioPaths, Exporter.getDataSet(data,i));
+                for i = 1 : length(results)
+                    Exporter.writeTitle(fid, Exporter.getDataSet(results,i));
+                    Exporter.writeSimulationType(fid, simParams);
+                    Exporter.saveHeader(fid, Exporter.getDataSet(results,i));
+                    Exporter.saveDataArray(fid, Exporter.getDataSet(results,i));
+                    Exporter.saveFigure(fileName, Exporter.getDataSet(results,i));
                 end
-                Exporter.saveTimeStamp(data, fid);
-                Exporter.saveParametersFromFile(fid,ioPaths.inputParametersFileName,simParams);
+                Exporter.saveTimeStamp(results, fid);
+                Exporter.saveParametersFromFile(fid, inputFile, simParams);
                 Exporter.saveSetPrivateProperties(fid, simParams);
             catch exception
                 fclose(fid);
@@ -34,11 +30,6 @@ classdef Exporter
     end
     
     methods(Static, Access = private)
-        function saveMatlabFile(fileName, data)
-            varString = inputname(2);
-            fileNameWithoutExtension = regexprep(fileName, '\.\w+$', '');
-            save(fileNameWithoutExtension, varString);
-        end
         function dataSet = getDataSet(data, idx)
             if ~iscell(data)
                 dataSet = data;
@@ -46,16 +37,18 @@ classdef Exporter
             end
             dataSet = data{idx};
         end
+
         function writeTitle(fid, data)
             fprintf(fid,'%s\n', data.info.title);
         end
-        function writeSimulationType(fid, userInput)
-            if userInput.isFourthOrder
+
+        function writeSimulationType(fid, simParams)
+            if simParams.isFourthOrder
                 isFourthOrderString = 'Fourth-order';
             else
                 isFourthOrderString = 'Second-order';
             end
-            if userInput.isInverted
+            if simParams.isInverted
                 isInvertedString = 'with inversion';
             else
                 isInvertedString = 'without inversion';
@@ -63,11 +56,13 @@ classdef Exporter
             fprintf(fid,'Simulation type: %s, %s.\n', ...
                 isFourthOrderString, isInvertedString);
         end
+
         function saveHeader(fid, data)
             fprintf(fid, 'Row: %s\n', data.info.labelRow); 
             fprintf(fid, 'Column: %s\n', data.info.labelColumn);
             fprintf(fid, 'Value: %s\n\n', data.info.labelZ);
         end
+        
         function saveDataArray(fid, data)
             if iscell(data.values)
                return; 
@@ -158,34 +153,28 @@ classdef Exporter
                 fprintf(fid, '\n');
             end
         end
-        function saveFigure(ioPaths,data)
+        function saveFigure(fileName,data)
             if ~iscell(data.values)
                 return;
             end
-            filename = Exporter.getFullFilename(ioPaths,'tiff');
-            saveas(gcf,filename);
+            saveas(gcf, [fileName, '.tiff']);
         end
-        function fileName = getFullFilename(data, ioPaths, extension, varargin)
-            filePath = ioPaths.getExportPath;
-            if ~exist(filePath, 'dir')
-                mkdir(filePath);
+
+        function fileName = getFullFilename(data, simulationType)
+            [~, outFolder] = ConfigHelper.getIOFolders;
+            dt =  datestr(date, 'yyyy-mm-dd');
+            expFolder = fullfile(outFolder,dt);
+
+            if ~exist(expFolder, 'dir')
+                mkdir(expFolder);
             end
 
-            if iscell(data)
-                lastData = data{end};
-            else
-                lastData = data;
-            end
-
-            if isempty(varargin)
-                fileName = ioPaths.getExportFileName(lastData, extension);
-            else
-                fileName = ioPaths.getExportFileName(lastData, extension, varargin{1});
-            end
-            fileName = fullfile(filePath, fileName);
+            tm = datestr(clock, 'hhMMss');
+            fileName = fullfile(expFolder, [dt, ' ', simulationType, ' ', tm]);
         end
+
         function fid = getFileId(fileName)
-            fid = fopen(fileName, 'w');
+            fid = fopen([fileName, '.dat'], 'w');
             if (fid == -1)
                 error('exporter:fileOpen', 'Could not open %s.', fileName);
             end
