@@ -1,18 +1,15 @@
 classdef Plotter<handle
-    %Plotter Summary of this class goes here
-    %   Detailed explanation goes here
+    %Plotter Reads data structure and logs meta-information
+    %   The Plotter class creates a log so that information about a
+    %   particular plot can be found. This information associates the data
+    %   shown with its source, so the used parameters can be retrieved.
     
     properties
         plotInfo;
     end
-
-    properties (Access = private)
-        ioPaths;
-    end
     
     methods (Access = public)
-        function plotter = Plotter(ioPaths)
-            plotter.ioPaths = ioPaths;
+        function plotter = Plotter()
             plotter.plotInfo = struct();
             plotter.plotInfo.dataDates = {};
             plotter.plotInfo.dataTitles = {};
@@ -175,7 +172,7 @@ classdef Plotter<handle
         end
 
         function exportPlot(obj)
-            [fileName, pathName] = uiputfile(obj.ioPaths.dropboxFolder);
+            [fileName, pathName] = uiputfile;
             if ~fileName
                 return;
             end
