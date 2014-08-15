@@ -1,51 +1,47 @@
 classdef ConfigHelper
 	methods(Static)
 		function inFile = getInputParametersFile()
-			disp('Choose input parameters file');
-			inFolder = ConfigHelper.getInputFolder();
+			disp('Choose input parameters file.');
+			[inFolder, outFolder] = ConfigHelper.getIOFolders;
 			[inFile, inFolder] = uigetfile(fullfile(inFolder,'*.json'), 'Choose input parameters file');
 			if (inFile == 0)
 				error('turbSimulator:noInputFile', 'No input file selected')
 			end
 			inFile = fullfile(inFolder, inFile);
-			ConfigHelper.writeInputParametersFolder(inFolder);
+			ConfigHelper.writeInputParametersFolder(inFolder, outFolder);
 		end
 
-		function inFolder = getInputFolder()
+		function setOutputFolder()
+			disp('Select output folder for simulation results.');
+			[inFolder, outFolder] = ConfigHelper.getIOFolders;
+			if isempty(outFolder)
+				outFolder = uigetdir('', 'Choose output folder for simulation results');
+			end
+			ConfigHelper.writeInputParametersFolder(inFolder, outFolder);
+		end
+
+		function [inFolder, outFolder] = getIOFolders()
 			inFolder = '';
-			fileID = fopen('turbSimulator.conf', 'r');
+			outFolder = '';
+			isNoConfigFile = isempty(ls('turbSimulatorConfig.json'));
 
 			% Configuration file does not exist
-			if (fileID == -1)
+			if (isNoConfigFile)
 				return;
 			end
 
-			% If it does exist
-			try
-				confParams = textscan(fileID, '%s', 'Delimiter', '\n');
-			catch exception
-				fclose(fileID);
+			configStruct = loadjson('turbSimulatorConfig.json');
+			if isfield(configStruct, 'inFolder')
+				inFolder = configStruct.inFolder;
 			end
-			fclose(fileID);
-
-			% but folder information is not there
-			if (isempty(confParams) || length(confParams{1})<2 )
-				return;
+			if isfield(configStruct, 'outFolder')
+				outFolder = configStruct.outFolder;
 			end
-
-			% Otherwise get the information
-			inFolder = confParams{1}{2};
 		end
 
-		function writeInputParametersFolder(inFolder)
-			fileID = fopen('turbSimulator.conf', 'w');
-			try
-				fprintf(fileID, 'Input parameters directory:\n%s', inFolder);
-			catch exception
-				fclose(fileID);
-				rethrow(exception);
-			end
-			fclose(fileID);
+		function writeInputParametersFolder(inFolder, outFolder)
+			ioStruct = struct('inFolder', inFolder, 'outFolder', outFolder);
+			savejson('', ioStruct, 'turbSimulatorConfig.json');
 		end
 
 	end

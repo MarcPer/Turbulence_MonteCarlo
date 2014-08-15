@@ -4,6 +4,7 @@ delete(get(0,'Children'));
 addpath('jsonlab');
 
 inputFile = ConfigHelper.getInputParametersFile;
+ConfigHelper.setOutputFolder;
 simParams = SimulationParameters(loadjson(inputFile));
 isAbort = simParams.checkConstraints;
 if isAbort
