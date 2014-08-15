@@ -257,9 +257,8 @@ classdef SimulationParameters<handle
 		fail1 = obj.checkConstraint1(params);
 		fail2 = obj.checkConstraint2(params);
 		fail3 = obj.checkConstraint3(params);
-		fail4 = obj.checkConstraint4();
 		
-		fail = (fail1 || fail2 || fail3 || fail4);
+		fail = (fail1 || fail2 || fail3);
         end
         function apertureRadius = setPointDetectorAtObservationPlane(obj,isPointDtc)
             apertureRadius = NaN;
@@ -315,27 +314,42 @@ classdef SimulationParameters<handle
         function computeDerivedQuantities(obj)
            wvl = obj.wavelength;
            L = obj.propagationDistance;
-           npl = obj.numberOfPhasePlanes;
            delta1 = obj.gridSpacingSourcePlane;
            deltan = obj.gridSpacingObservationPlane;
+
+           obj.numberOfPhasePlanes = obj.getMinimumNumberOfPhasePlanes;
 
            [obj.waistAtSourcePlane, obj.waistAtObservationPlane] = obj.getBeamWidthsAtSourceAndObservationPlanes;
 
            obj.waveNumber =  2*pi/wvl;
 
-           obj.planePositions = linspace(0, L, npl);
+           obj.planePositions = linspace(0, L, obj.numberOfPhasePlanes);
            z = obj.planePositions;
            
            obj.complexBeamParameter = obj.computeComplexParameterAtSourcePlane;
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 4*obj.waistAtSourcePlane;
-           obj.regionOfInterestAtObservationPlane = 4*obj.waistAtObservationPlane;
-           
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
            obj.computeStructureConstantSquared();
+
+           r0sw = obj.totalFriedCoherenceRadiusByStrength;
+           r0sw = ~isinf(r0sw) .* r0sw;
+           obj.regionOfInterestAtSourcePlane = 4*obj.waistAtSourcePlane + max(obj.transverseSeparationInR0Units) * max(r0sw);
+           obj.regionOfInterestAtObservationPlane = 4*obj.waistAtObservationPlane;
+        end
+
+        function npl = getMinimumNumberOfPhasePlanes(obj)
+            wvl = obj.wavelength;
+            [Nx, Ny] = obj.getPhaseScreenGridSize;
+            N = min(Nx, Ny);
+            deltan = obj.gridSpacingObservationPlane;
+            delta1 = obj.gridSpacingSourcePlane;
+
+            zmax = min([delta1 deltan])^2 * N / wvl;
+            npl = ceil(obj.propagationDistance/zmax)+1;
+            npl = max(npl, 4);
         end
 
         function [w1, wn] = getBeamWidthsAtSourceAndObservationPlanes(obj)
@@ -531,28 +545,7 @@ classdef SimulationParameters<handle
                     (1+L/rad)*delta1 - wvl*L/D1, (1+L/rad)*delta1 + wvl*L/D1);
             end
         end
-        function fail4 = checkConstraint4(obj)
-            wvl = obj.wavelength;
-            [Nx, ~] = obj.getPhaseScreenGridSize;
-            N = min(Nx);
-            deltan = obj.gridSpacingObservationPlane;
-            delta1 = obj.gridSpacingSourcePlane;
-            npl = obj.numberOfPhasePlanes;
-
-            zSep = obj.planePositions(2:end) - obj.planePositions(1:end-1);
-            zmax = min([delta1 deltan])^2 * N / wvl;
-            nPlanesMin = ceil(obj.propagationDistance/zmax)+1;
-            
-            fail4 = (npl <= nPlanesMin || max(zSep) >= zmax);
-            fprintf('Constraint 4: ');
-            if ~fail4
-                fprintf('Satisfied\n');
-            else
-                fprintf(['Not satisfied [Number of planes = %u ', ...
-                    'should be greater than %u]\n'], ...
-                    npl, nPlanesMin);
-            end
-        end
+        
     end
 end
 
