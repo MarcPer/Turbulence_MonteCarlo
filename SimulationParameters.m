@@ -3,9 +3,12 @@ classdef SimulationParameters<handle
     
     properties(Access = public)
     	% USER INPUT
-		% Geometry
+        % Simulation Information
+        simulationType;
         isFourthOrder;
         isInverted;
+        shutdownOrHibernate;
+		% Geometry
         propagationDistance;
         numberOfPhasePlanes;
 		turbulenceRegionStartPosition;
@@ -19,8 +22,8 @@ classdef SimulationParameters<handle
         innerScale;
         % Beam
         wavelength;
-        waistAtSourcePlane;         % e-2 intensity radius - User should specify only one waist
-        waistAtObservationPlane;    % e-2 intensity radius
+        waistRadius;
+        waistPosition;
         hermiteGaussOrders;
         % Simulation
         numberOfRealizations;
@@ -33,8 +36,9 @@ classdef SimulationParameters<handle
     properties(GetAccess = public, SetAccess = private)
         % DERIVED PARAMETERS
         waveNumber;
+        waistAtSourcePlane;         % e-2 intensity radius
+        waistAtObservationPlane;    % e-2 intensity radius
         gammaStrength;
-        isWaistAtSourcePlane;
 		planePositions;
 		gridSpacingVector;
 		friedCoherenceRadiusMatrix;   % {i,j} -> Turb. strength, Prop. plane
@@ -49,17 +53,23 @@ classdef SimulationParameters<handle
     end
        
     methods(Access = public)
-        function simParams = SimulationParameters(ioPath,varargin)
-            addpath('jsonlab/');
-            simParams.gammaCurrentIndex = 1;
-            simParams.checkIfFourthOrderAndInverted(varargin);
-            fData = ioPath.openParametersFile();
-            simParams.readParameters(fData);
-            simParams.checkConflictingInputParameters;
-            simParams.setDefaultValueForBlankParameters();
-            simParams.computeDerivedQuantities();
+        function simParams = SimulationParameters(pStruct)
+            fieldNames = fieldnames(pStruct);
+            for i = 1 : numel(fieldNames)
+                simParams.(fieldNames{i}) = pStruct.(fieldNames{i});
+            end
+
+            simParams.simulationType = upper(simParams.simulationType);
+            simParams.checkValidParameters;
+            simParams.setDefaultValueForBlankParameters;
+            simParams.computeDerivedQuantities;
         end
         
+        function isAbort = checkConstraints(obj)
+            isFail = obj.constraintAnalysis;
+            isAbort = UserInput.abortWhenConstraintFail(isFail, obj.shutdownOrHibernate); 
+        end
+
         function sg = getSuperGaussianFilter(obj)
             delta1 = obj.gridSpacingSourcePlane;
             [x1, y1] = obj.getMeshGridAtSourcePlane();
@@ -229,16 +239,9 @@ classdef SimulationParameters<handle
             circ = ( xn.^2 + yn.^2 <= apertureRadius^2);
         end
 		function fail = constraintAnalysis(obj)
-        L = obj.propagationDistance;
-        k = obj.waveNumber;
         [D1p, D2p] = obj.getEffectiveROI;
         
-        if obj.isWaistAtSourcePlane
-            rad = Inf;
-        else
-            wn = obj.waistAtObservationPlane;
-            rad = L*(1 + (k*wn^2/(2*L))^2);	% Beam radius of curvature
-        end
+        rad = 1 / real(1/obj.complexBeamParameter); % Radius of curvature at source plane
 		
 		figHndl = figure;
 		params = struct('figureHandle', figHndl, ...
@@ -278,39 +281,24 @@ classdef SimulationParameters<handle
     end
       
     methods(Access = private)
-        function checkIfFourthOrderAndInverted(obj,params)
-            str = Util.transformInputParametersIntoStructure(params);
-            if isfield(str, 'FourthOrder')
-                obj.isFourthOrder = str.FourthOrder;
-            end
-            if isfield(str, 'Inverted')
-                obj.isInverted = str.Inverted;
-            end
+        function checkValidParameters(obj)
+            obj.checkNonNegativeParams;
+            obj.checkOutOfRangeParams;
+            obj.checkIntegerParams;
         end
-        function readParameters(obj,fData)
-            hashTable = regexp(fData, '(\w+)\s*:\s*([\w\.\-\,\s]+)$', 'tokens', 'lineanchors');
-            for i = 1 : length(hashTable)
-                if (length(hashTable{i}) == 2)
-                    splitStr = regexprep(hashTable{i}{2},'\s+', '');
-                    splitStr = regexp(splitStr, '[\,]+', 'split');
-                    obj.(hashTable{i}{1}) = sort(str2double(splitStr));
-                end
-            end
-        end
-        function checkConflictingInputParameters(obj)
-            obj.checkIfTwoWaists();
-        end
-        function checkIfTwoWaists(obj)
-            if (~isnan(obj.waistAtObservationPlane) && ~isnan(obj.waistAtSourcePlane))
-                error('simParams:twoWaists', 'Both waistAtSourcePlane and waistAtObservationPlane were given as input parameters. It should be one or the other.')
-            end
 
-            if isnan(obj.waistAtObservationPlane)
-                obj.isWaistAtSourcePlane = true;
-            else
-                obj.isWaistAtSourcePlane = false;
-            end
+        function checkNonNegativeParams(obj)
+            % not implemented
         end
+
+        function checkOutOfRangeParams(obj)
+            % not implemented
+        end
+
+        function checkIntegerParams(obj)
+            % not implemented
+        end
+
         function setDefaultValueForBlankParameters(obj)
             obj.setValueIfEmpty('turbulenceRegionStartPosition', 0);
             obj.setValueIfEmpty('turbulenceRegionEndPosition', obj.propagationDistance);
@@ -319,20 +307,22 @@ classdef SimulationParameters<handle
             obj.setValueIfEmpty('transverseSeparationInR0Units', 0);
             obj.setValueIfEmpty('hermiteGaussOrders', 0);
         end
-        function setValueIfEmpty(obj, prop, value)
-            obj.(prop)(isnan(obj.(prop)) | isempty(obj.(prop))) = value;
+
+        function setValueIfEmpty(obj, field, value)
+            obj.(field) (isnan(obj.(field)) | isempty(obj.(field))) = value;
         end
+
         function computeDerivedQuantities(obj)
            wvl = obj.wavelength;
            L = obj.propagationDistance;
            npl = obj.numberOfPhasePlanes;
            delta1 = obj.gridSpacingSourcePlane;
            deltan = obj.gridSpacingObservationPlane;
-           [w1, wn] = obj.getBeamWidthsAtSourceAndObservationPlanes;
-           obj.waistAtSourcePlane = w1;
-           obj.waistAtObservationPlane = wn;
-           
+
+           [obj.waistAtSourcePlane, obj.waistAtObservationPlane] = obj.getBeamWidthsAtSourceAndObservationPlanes;
+
            obj.waveNumber =  2*pi/wvl;
+
            obj.planePositions = linspace(0, L, npl);
            z = obj.planePositions;
            
@@ -340,43 +330,36 @@ classdef SimulationParameters<handle
            
            obj.gridSpacingVector = (1-z/L)*delta1 + z/L*deltan;
            
-           obj.regionOfInterestAtSourcePlane = 4*w1;
-           obj.regionOfInterestAtObservationPlane = 4*wn;
+           obj.regionOfInterestAtSourcePlane = 4*obj.waistAtSourcePlane;
+           obj.regionOfInterestAtObservationPlane = 4*obj.waistAtObservationPlane;
            
            obj.computeGammaStrength();
            obj.computeFriedCoherenceRadiusMatrix();
            obj.computeStructureConstantSquared();
         end
+
         function [w1, wn] = getBeamWidthsAtSourceAndObservationPlanes(obj)
             k = 2*pi/obj.wavelength;
             if obj.isFourthOrder
                 k = 2*k;
             end
+            z0 = obj.waistPosition;
+            w0 = obj.waistRadius;
             
             L = obj.propagationDistance;
-            
-            if obj.isWaistAtSourcePlane
-                w1 = obj.waistAtSourcePlane;
-                wn = w1 * sqrt(1 + (2*L/(k*w1^2)).^2);
-            else
-                wn = obj.waistAtObservationPlane;
-                w1 = wn * sqrt(1 + (2*L/(k*wn^2)).^2);
-            end
+            w1 = w0 * sqrt(1 + (2*z0/(k*w0^2)).^2);
+            wn = w0 * sqrt(1 + (2*(L-z0)/(k*w0^2)).^2);
         end
-        function q = computeComplexParameterAtSourcePlane(obj)
-            w1 = obj.waistAtSourcePlane;
-            wn = obj.waistAtObservationPlane;
-            k = obj.waveNumber;
-            if obj.isFourthOrder
-                k = 2*k;
-            end
-            L = obj.propagationDistance;
 
-            if obj.isWaistAtSourcePlane
-                q = -1i*k*w1^2/2;
-            else
-                q = -L -1i*k*wn^2/2;
+        function q = computeComplexParameterAtSourcePlane(obj)
+            z0 = obj.waistPosition;
+            w0 = obj.waistRadius;
+
+            if obj.isFourthOrder
+                k = 2*obj.waveNumber;
             end
+
+            q = -z0 -1i*k*w0^2/2;
         end
 
         function computeGammaStrength(obj)

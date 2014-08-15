@@ -1,4 +1,6 @@
 {
+	"simulationType": "psiParity",
+	"shutdownOrHibernate": 0,
 	"isFourthOrder": 1,
 	"isInverted": 1,
 	
@@ -14,8 +16,8 @@
 	"innerScale":    0,
 
 	"wavelength": 1550e-9,
-	"waistAtSourcePlane": 0.05,
-	"waistAtObservationPlane": null,
+	"waistRadius": 0.05,
+	"waistPosition": 0,
 	"hermiteGaussOrders": 00,
 
 	"numberOfRealizations":  300,

@@ -21,6 +21,25 @@ classdef TurbulenceSimulator<handle
             ts.numberOfTransverseSeparations = length(...
                 simParams.transverseSeparationInR0Units);
         end
+
+        function results = simulate(obj)
+            switch obj.simulationParameters.simulationType
+                case 'PSIPARITY'
+                    results = 'Test';
+                    %[results, ~] = obj.getPsiDifferenceParityAndChiSquared;
+                case 'PSICHI2'
+                    [~, results] = obj.getPsiDifferenceParityAndChiSquared;
+                case 'IRRADIANCE'
+                    results = obj.getIrradianceForEachGamma('Normalized', true);
+                case 'MODEMATCHING'
+                    results = obj.getModeMatching;
+                case 'MODEPARITY'
+                    results = obj.getModeParity;
+                otherwise
+                    error('turbSimulator:simulationTypeInvalid', 'Invalid simulation type')
+            end
+        end
+
     end
     methods(Access = public)
         function outputField = propagate(obj, phScreen, wvl)

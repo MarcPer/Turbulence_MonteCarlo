@@ -1,6 +1,7 @@
 classdef ConfigHelper
 	methods(Static)
 		function inFile = getInputParametersFile()
+			disp('Choose input parameters file');
 			inFolder = ConfigHelper.getInputFolder();
 			[inFile, inFolder] = uigetfile(fullfile(inFolder,'*.json'), 'Choose input parameters file');
 			if (inFile == 0)
