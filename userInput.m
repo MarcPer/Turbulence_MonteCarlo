@@ -1,39 +1,13 @@
-classdef UserInput<handle
-    properties
-        enumShutdown;
-        isFourthOrder;
-        isInverted;
-    end
-    
-    methods(Access = public)
-        function abort = getSimulationType(obj)
-            choice = questdlg('Select simulation type', 'Simulation type', ...
-                'Coincidences with inversion', 'Coincidences without inversion', ...
-                'Intensity', 'Intensity');
-            abort = 0;
-
-            switch choice
-                case 'Coincidences with inversion'
-                    obj.isFourthOrder = 1;
-                    obj.isInverted = 1;
-                case 'Coincidences without inversion'
-                    obj.isFourthOrder = 1;
-                    obj.isInverted = 0;
-                case 'Intensity'
-                    obj.isFourthOrder = 0;
-                    obj.isInverted = 0;
-                otherwise
-                    abort = 1;
-            end
-        end 
-        function shutdownComputer(obj)
+classdef UserInput
+    methods(Static)
+        function shutdownComputer(enumShutdown)
             wtime = 90;         % Time limit to abort shutdown
             
-            if ~(obj.enumShutdown)
+            if ~(enumShutdown)
                 return;
             end
             
-            if obj.enumShutdown == 1
+            if enumShutdown == 1
                 shut_mode = 'shutdown';
                 shut_cmd = 'shutdown /s';
             else
@@ -54,25 +28,23 @@ classdef UserInput<handle
             
             switch lower(reply_shut)
                 case 'y'
-                    if obj.enumShutdown == 1
+                    if enumShutdown == 1
                         fprintf('\nShutting down.\n');
-                    elseif obj.enumShutdown == 2
+                    elseif enumShutdown == 2
                         fprintf('\nHibernating.\n');
                     end
                     pause(3);
                     system(shut_cmd);
                 otherwise
-                    if obj.enumShutdown == 1
+                    if enumShutdown == 1
                         fprintf('Shutdown aborted.\n');
-                    elseif obj.enumShutdown == 2
+                    elseif enumShutdown == 2
                         fprintf('Hibernation aborted.\n');
                     end
              end
  
         end
-    end
-    
-    methods(Static)
+
         function isAbort = abortWhenConstraintFail(fail, shutCtrl)
             isAbort = 0;
             if ~fail
@@ -86,6 +58,7 @@ classdef UserInput<handle
             end
             UserInput.shutDownAborted(isAbort, shutCtrl);
         end
+
         function shutDownAborted(isAbort, shutCtrl)
             if isAbort
                 switch shutCtrl
@@ -96,56 +69,54 @@ classdef UserInput<handle
                 end
             end
         end
+
         function h = createWaitBar()
             h = waitbar(0, '0%', 'Name', 'Simulating turbulence...', ...
                 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
             setappdata(h,'canceling',0);
         end
+
         function updateWaitBar(waitBarHandle,iRe, nRe)
             waitbar(iRe/nRe, waitBarHandle, sprintf('%3.1f%%',iRe/nRe*100)); 
         end
+
         function abort = isAborted(waitBarHandle)
             abort = 0;
             if getappdata(waitBarHandle,'canceling')
                 abort = 1;
             end
         end
+
         function printOutProgress(statusString, idx, fIdx)
             fprintf('%s: %u of %u\n', statusString, idx, fIdx);
         end
-    end
-    
-    methods
-        function set.enumShutdown(obj,value)
-            if all( ~(value == [0; 1; 2]))   % Check if argument is correct
-                error('PhaseScreen_shut:arg', ['Variable SHUT must be either', ...
-                    ' 0, 1 or 2.']);
+
+        function shutDown = confirmShutdownOrHibernate(enumShutdown)
+            shutDown = enumShutdown;
+
+            switch enumShutdown
+                case 0
+                    return;
+                case 1
+                    shutString = 'SHUTDOWN';
+                case 2
+                    shutString = 'HIBERNATION';
+                otherwise
+                    shutString = 'HIBERNATION';
             end
-            
-            obj.enumShutdown = value;
-            if (value == 1)
-                shutMode = 'SHUTDOWN';
-            end
-            if (value == 2)
-                shutMode = 'HIBERNATION';
-            end
-            
-            choiceShut = '';
-            if value
-                prompt = sprintf('Computer is scheduled for %s. Press CANCEL to unschedule.\n', shutMode);
-                choiceShut = questdlg(prompt, 'Confirm Shutdown/Hibernation', ...
-                    'OK', 'Cancel', 'Cancel');
-            end
-            
+
+            prompt = sprintf('Computer is scheduled for %s. Press CANCEL to unschedule.\n', shutString);
+            choiceShut = questdlg(prompt, 'Confirm Shutdown/Hibernation', 'OK', 'Cancel', 'Cancel');
+
             switch choiceShut
                 case 'Cancel'
-                    obj.enumShutdown = 0;
-                    fprintf('%s cancelled.\n', shutMode);
+                    shutDown = 0;
+                    fprintf('%s cancelled.\n', shutString);
                 case 'OK'
-                    fprintf('%s confirmed.\n', shutMode);
+                    fprintf('%s confirmed.\n', shutString);
             end
-            
+
         end
-    end
-    
+
+    end 
 end

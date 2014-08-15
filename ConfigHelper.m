@@ -12,9 +12,9 @@ classdef ConfigHelper
 		end
 
 		function setOutputFolder()
-			disp('Select output folder for simulation results.');
 			[inFolder, outFolder] = ConfigHelper.getIOFolders;
 			if isempty(outFolder)
+				disp('Select output folder for simulation results.');
 				outFolder = uigetdir('', 'Choose output folder for simulation results');
 			end
 			ConfigHelper.writeInputParametersFolder(inFolder, outFolder);
@@ -25,7 +25,7 @@ classdef ConfigHelper
 			outFolder = '';
 			isNoConfigFile = isempty(ls('turbSimulatorConfig.json'));
 
-			% Configuration file does not exist
+			% Exit if configuration file does not exist
 			if (isNoConfigFile)
 				return;
 			end
