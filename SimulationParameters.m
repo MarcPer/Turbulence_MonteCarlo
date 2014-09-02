@@ -137,9 +137,9 @@ classdef SimulationParameters<handle
             r0(isinf(r0)) = 0;
             xc = obj.transverseSeparationInR0Units(separationIndex) * r0(iGamma);
 
-            arg = k*Dwindow/(2*pi*L);
+            arg = k*(Dwindow + xc)/(2*pi*L);
             Uin = 2*pi*L/k * exp(-1i*k/(2*L) * (x1.^2 + y1.^2)) .* exp(1i*k/(2*L) * xc^2) .* exp(-1i*k/L * xc * x1) .* ...
-                arg^2 .* sinc(arg*x1) .* sinc(arg*y1);
+                arg^2 .* sinc(arg*(x1-xc)) .* sinc(arg*y1);
         end
 
         function vacuumPhase = getOutputVacuumPhaseProfile(obj, separationIndex)

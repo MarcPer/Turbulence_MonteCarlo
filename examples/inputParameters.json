@@ -23,5 +23,5 @@
 	"transverseGridSize": 128,
 	"gridSpacingSourcePlane": 0.0020968,
 	"gridSpacingObservationPlane": 0.0018517,
-	"transverseSeparationInR0Units":   0
+	"transverseSeparationInR0Units":   [0, 0.02, 0.05, 0.1, 0.5, 1, 3]
 }
