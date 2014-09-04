@@ -1,5 +1,5 @@
 classdef Plotter<handle
-    %Plotter Reads data structure and logs meta-information
+    %Plotter Reads data structure, plots results and logs meta-information
     %   The Plotter class creates a log so that information about a
     %   particular plot can be found. This information associates the data
     %   shown with its source, so the used parameters can be retrieved.
@@ -124,7 +124,12 @@ classdef Plotter<handle
             obj.setPlotInfo(data);
             if size(varargin)==0
                 figure;
-                loglog(x,y, 'LineWidth', 2);
+                h = loglog(x,y, 's-', 'LineWidth', 2);
+                disp(get(h, 'Color'));
+                for i = 1 : numel(h)
+                    set(h(i), 'MarkerFaceColor', get(h(i), 'Color'));
+                end
+                grid on;
                 grid minor;
                 Plotter.drawPlotInformation(data);
                 return;

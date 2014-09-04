@@ -30,3 +30,7 @@ end
 
 % Export results
 Exporter.exportToDisk(results, simParams, inputFile);
+
+% Plot results
+plotter = Plotter;
+plotter.plotLogLog(results);

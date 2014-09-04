@@ -19,9 +19,9 @@
 	"waistPosition": 0,
 	"hermiteGaussOrders": 00,
 
-	"numberOfRealizations":  1,
-	"transverseGridSize": 128,
-	"gridSpacingSourcePlane": 0.0020968,
-	"gridSpacingObservationPlane": 0.0018517,
+	"numberOfRealizations":  100,
+	"transverseGridSize": 2048,
+	"gridSpacingSourcePlane": 0.00199,
+	"gridSpacingObservationPlane": 0.0009,
 	"transverseSeparationInR0Units":   [0, 0.02, 0.05, 0.1, 0.5, 1, 3]
 }
