@@ -125,7 +125,6 @@ classdef Plotter<handle
             if size(varargin)==0
                 figure;
                 h = loglog(x,y, 's-', 'LineWidth', 2);
-                disp(get(h, 'Color'));
                 for i = 1 : numel(h)
                     set(h(i), 'MarkerFaceColor', get(h(i), 'Color'));
                 end

@@ -133,9 +133,13 @@ classdef SimulationParameters<handle
             k = obj.waveNumber;
             iGamma = obj.gammaCurrentIndex;
             Dwindow = obj.regionOfInterestAtObservationPlane/2;
-            r0 = obj.totalFriedCoherenceRadiusByStrength;
-            r0(isinf(r0)) = 0;
-            xc = obj.transverseSeparationInR0Units(separationIndex) * r0(iGamma);
+            if (nargin == 1)
+                xc = 0;
+            else
+                r0 = obj.totalFriedCoherenceRadiusByStrength;
+                r0(isinf(r0)) = 0;
+                xc = obj.transverseSeparationInR0Units(separationIndex) * r0(iGamma);
+            end
 
             arg = k*(Dwindow + xc)/(2*pi*L);
             Uin = 2*pi*L/k * exp(-1i*k/(2*L) * (x1.^2 + y1.^2)) .* exp(1i*k/(2*L) * xc^2) .* exp(-1i*k/L * xc * x1) .* ...

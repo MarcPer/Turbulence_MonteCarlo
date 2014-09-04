@@ -133,10 +133,6 @@ classdef TurbulenceSimulator<handle
 
         function [psiParity, psiChi2] = getPsiDifferenceParityAndChiSquared(obj)
             nGamma = length(obj.simulationParameters.gammaStrength);
-            if ~ismember(0, obj.simulationParameters.transverseSeparationInR0Units)
-                obj.simulationParameters.transverseSeparationInR0Units = [0,  obj.simulationParameters.transverseSeparationInR0Units];
-                obj.numberOfTransverseSeparations = obj.numberOfTransverseSeparations + 1;
-            end
 
             nSep = obj.numberOfTransverseSeparations;
 
@@ -196,19 +192,15 @@ classdef TurbulenceSimulator<handle
                     end
 
                     phScreen = generateScreen(obj.simulationParameters);
-                    Uout0 = obj.propagateInputField(obj.simulationParameters.getInputPointSource(1), phScreen, wvl);
+                    Uout0 = obj.propagateInputField(obj.simulationParameters.getInputPointSource, phScreen, wvl);
                     Uout0 = Uout0 .* exp(-1i*vacuumPhase(:,:,1));
 
                     for iSep = 1 : nSep
                         
-                        if iSep == 1
-                            Uout = Uout0;
-                        else
-                            Uin = obj.simulationParameters.getInputPointSource(iSep);
-                            Uout = obj.propagateInputField(Uin, phScreen, wvl);
-                            Uout = Uout .* exp(-1i*vacuumPhase(:,:,iSep));
-                        end
-
+                        Uin = obj.simulationParameters.getInputPointSource(iSep);
+                        Uout = obj.propagateInputField(Uin, phScreen, wvl);
+                        Uout = Uout .* exp(-1i*vacuumPhase(:,:,iSep));
+                        
                         if obj.simulationParameters.isFourthOrder && obj.simulationParameters.isInverted
                             Uout = Uout0 .* Util.rot90All(Uout,2);
                         elseif obj.simulationParameters.isFourthOrder && ~obj.simulationParameters.isInverted
