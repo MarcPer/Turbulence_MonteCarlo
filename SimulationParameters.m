@@ -9,6 +9,7 @@ classdef SimulationParameters<handle
         isInverted;
         shutdownOrHibernate;
 		% Geometry
+        inputField;
         propagationDistance;
         numberOfPhasePlanes;
 		turbulenceRegionStartPosition;
@@ -60,6 +61,7 @@ classdef SimulationParameters<handle
             end
 
             simParams.simulationType = upper(simParams.simulationType);
+            simParams.inputField = upper(simParams.inputField);
             simParams.checkValidParameters;
             simParams.setDefaultValueForBlankParameters;
             simParams.computeDerivedQuantities;
@@ -78,7 +80,24 @@ classdef SimulationParameters<handle
                 -(y1/(0.47*Ny*delta1)).^16);
         end
 
-        function Uin = getInputField(obj, varargin)
+        function Uin = getInputField(obj, arg)
+            if (nargin == 1)
+                arg = 0;
+            end
+
+            switch obj.inputField
+                case 'POINTSOURCE'
+                    separationIndex = arg;
+                    Uin = obj.getInputPointSource(separationIndex);
+                case 'HERMITEGAUSS'
+                    orderIndex = arg;
+                    Uin = obj.getInputHermiteGaussField(orderIndex);
+                otherwise
+                    error('simulationParameters:inputFieldInvalid', 'Invalid input field')
+            end
+        end
+
+        function Uin = getInputHermiteGaussField(obj, orderIndex)
             [x1,y1] = obj.getMeshGridAtSourcePlane();
             qz = obj.complexBeamParameter;
             k = obj.waveNumber;
@@ -86,19 +105,13 @@ classdef SimulationParameters<handle
                 k = 2*k;
             end
 
-            if isempty(varargin)
-                Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
-                return;
-            end
-
-            n = varargin{1};
-            if ~isfloat(n)
+            if (orderIndex == 0)
                 Uin = HG(0,qz,k,x1) .* HG(0,qz,k,y1);
                 return;
             end
 
             hgOrderXY = obj.hermiteGaussOrders;
-            [nx, ny] = Util.getHermiteGaussOrders(hgOrderXY(n));
+            [nx, ny] = Util.getHermiteGaussOrders(hgOrderXY(orderIndex));
             Uin = HG(nx,qz,k,x1) .* HG(ny,qz,k,y1);
         end
 
@@ -133,7 +146,7 @@ classdef SimulationParameters<handle
             k = obj.waveNumber;
             iGamma = obj.gammaCurrentIndex;
             Dwindow = obj.regionOfInterestAtObservationPlane/2;
-            if (nargin == 1)
+            if (separationIndex == 0)
                 xc = 0;
             else
                 r0 = obj.totalFriedCoherenceRadiusByStrength;
@@ -288,6 +301,10 @@ classdef SimulationParameters<handle
                 obj.regionOfInterestAtObservationPlane = 4*min(r0);
             end
         end
+
+        function NROI = getMatrixSizeInROI(obj)
+            NROI = round(obj.regionOfInterestAtObservationPlane / obj.gridSpacingObservationPlane);
+        end
     end
       
     methods(Access = private)
@@ -346,7 +363,7 @@ classdef SimulationParameters<handle
            obj.computeStructureConstantSquared();
 
            r0sw = obj.totalFriedCoherenceRadiusByStrength;
-           r0sw = ~isinf(r0sw) .* r0sw;
+           r0sw(isinf(r0sw)) = 0;
            obj.regionOfInterestAtSourcePlane = 4*obj.waistAtSourcePlane + max(obj.transverseSeparationInR0Units) * max(r0sw);
            obj.regionOfInterestAtObservationPlane = 4*obj.waistAtObservationPlane;
         end
@@ -379,9 +396,10 @@ classdef SimulationParameters<handle
         function q = computeComplexParameterAtSourcePlane(obj)
             z0 = obj.waistPosition;
             w0 = obj.waistRadius;
+            k = obj.waveNumber;
 
             if obj.isFourthOrder
-                k = 2*obj.waveNumber;
+                k = 2*k;
             end
 
             q = -z0 -1i*k*w0^2/2;

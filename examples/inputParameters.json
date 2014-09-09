@@ -4,6 +4,7 @@
 	"isFourthOrder": 1,
 	"isInverted": 1,
 	
+	"inputField": "pointSource",
 	"propagationDistance": 2000,
 	"turbulenceRegionStartPosition":    0,
 	"turbulenceRegionEndPosition": 2000,

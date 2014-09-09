@@ -1,4 +1,5 @@
 clear; close all;
+
 % Add dependencies
 set(0,'ShowHiddenHandles','on');
 delete(get(0,'Children'));
@@ -31,6 +32,10 @@ end
 % Export results
 Exporter.exportToDisk(results, simParams, inputFile);
 
+
 % Plot results
-plotter = Plotter;
-plotter.plotLogLog(results);
+plotter = Plotter(simParams.simulationType);
+plotter.plot(results);
+
+% Shutdown computer
+UserInput.shutdownComputer(shutdownOrHibernate);

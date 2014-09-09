@@ -507,9 +507,10 @@ classdef TurbulenceSimulator<handle
             labelColumn = '\gamma';
             labelRow = 'Separation (in units of r0)';
             labelZ = 'Irradiance';
+            NROI = simParams.getMatrixSizeInROI;
             irrStruct.info = struct('title', tit, ...
                 'labelColumn', labelColumn, 'labelRow', labelRow, ...
-                'labelZ', labelZ);
+                'labelZ', labelZ, 'NROI', NROI);
         end
         function IavgRe = getAverageIrradianceOverRealizations(obj)
             obj.abortButtonHandle = UserInput.createWaitBar;

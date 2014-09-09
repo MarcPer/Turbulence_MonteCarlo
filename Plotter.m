@@ -6,13 +6,27 @@ classdef Plotter<handle
     
     properties
         plotInfo;
+        simulationType;
     end
     
     methods (Access = public)
-        function plotter = Plotter()
+        function plotter = Plotter(simulationType)
+            plotter.simulationType = simulationType;
             plotter.plotInfo = struct();
             plotter.plotInfo.dataDates = {};
             plotter.plotInfo.dataTitles = {};
+        end
+
+        function plot(obj, data)
+            switch obj.simulationType
+                case 'IRRADIANCE'
+                    obj.plotIntensityProfilesForEachGamma(data);
+                case 'PSIPARITY'
+                    obj.plotLogLog(data);
+                otherwise
+                    error('plotter:plotUndefinedForSimulationType', 'Plot not defined for given simulation type')
+            end
+
         end
 
         function plotIntensityProfilesForEachGamma(obj, data)
@@ -20,13 +34,15 @@ classdef Plotter<handle
             set(gcf, 'Units', 'normalized', 'Position', [0.625 0.28 0.365 0.61]);
             row = data.rowParams;       % Separation
             col = data.columnParams;    % Gamma
+
+            NROI = data.info.NROI;
             
             obj.setPlotInfo(data);
             for iRow = 1 : length(row)
                 for iCol = 1 : length(col)
-                    i = 3*(iRow-1)+iCol;
+                    i = length(col)*(iRow-1)+iCol;
                     subplot( length(row), length(col), i);
-                    imagesc(data.values{iCol}(:, :, iRow));
+                    imagesc(Util.crop(data.values{iCol}(:, :, iRow), NROI, NROI)  );
                     axis off;
                     str = sprintf('gamma = %2.2g um, sep = %2.2g r0', col(iCol), row(iRow));
                     title(str);
@@ -173,6 +189,8 @@ classdef Plotter<handle
 
         function clearPlotInfo(obj)
             obj.plotInfo = struct();
+            obj.plotInfo.dataDates = {};
+            obj.plotInfo.dataTitles = {};
         end
 
         function exportPlot(obj)
