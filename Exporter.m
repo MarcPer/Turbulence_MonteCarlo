@@ -16,7 +16,6 @@ classdef Exporter
                     Exporter.writeSimulationType(fid, simParams);
                     Exporter.saveHeader(fid, Exporter.getDataSet(results,i));
                     Exporter.saveDataArray(fid, Exporter.getDataSet(results,i));
-                    Exporter.saveFigure(fileName, Exporter.getDataSet(results,i));
                 end
                 Exporter.saveTimeStamp(results, fid);
                 Exporter.saveParametersFromFile(fid, inputFile, simParams);
@@ -27,7 +26,17 @@ classdef Exporter
             end
             fclose(fid);
         end 
+
+        function exportFigure(results, simulationType)
+            fileName = Exporter.getFullFilename(results, simulationType);
+            for i = 1 : length(results)
+                fileName = [fileName '_' num2str(i)];
+                Exporter.saveFigure(fileName, Exporter.getDataSet(results,i));
+            end
+        end
+
     end
+
     
     methods(Static, Access = private)
         function dataSet = getDataSet(data, idx)

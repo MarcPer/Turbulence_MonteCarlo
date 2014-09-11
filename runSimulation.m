@@ -5,6 +5,7 @@ set(0,'ShowHiddenHandles','on');
 delete(get(0,'Children'));
 addpath('jsonlab');
 addpath('propagation_routines');
+addpath('waitinput');
 
 % Setup simulation
 inputFile = ConfigHelper.getInputParametersFile;
@@ -21,6 +22,7 @@ end
 % Perform simulation
 turbSimulator = TurbulenceSimulator(simParams);
 try
+	ticID = tic;
 	results = turbSimulator.simulate;
 catch exception
     UserInput.shutdownComputer(shutdownOrHibernate);
@@ -29,13 +31,19 @@ catch exception
     rethrow(exception);
 end
 
-% Export results
-Exporter.exportToDisk(results, simParams, inputFile);
+% Print elapsed time in readable form
+tm = toc(ticID);
+disp(Util.printReadableTime(tm));
 
+% Export raw results
+Exporter.exportToDisk(results, simParams, inputFile);
 
 % Plot results
 plotter = Plotter(simParams.simulationType);
 plotter.plot(results);
+
+% Save irradiance plots to disk (disabled as figure might take considerable disk space)
+% Exporter.exportFigure(results, simParams.simulationType)
 
 % Shutdown computer
 UserInput.shutdownComputer(shutdownOrHibernate);

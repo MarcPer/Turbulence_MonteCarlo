@@ -273,5 +273,42 @@ classdef Util
             end
         end
 
+        function str = printReadableTime(tm)
+            tm = round(tm);
+            SECONDS_IN_DAYS = 24*60*60;
+
+            days = round( tm/SECONDS_IN_DAYS);
+            tm = mod(tm, SECONDS_IN_DAYS);
+
+            hours = round( tm/ (60*60));
+            tm = mod(tm, 60*60);
+
+            minutes = round(tm/60);
+            seconds = mod(tm, 60);
+
+            str = '';
+            if (~days && ~hours && ~minutes && ~seconds)
+                return;
+            end
+
+            if days
+                str = [str num2str(days, '%d'), ' days '];
+            end
+
+            if hours
+                str = [str num2str(hours, '%d'), ' hours '];
+            end
+
+            if minutes
+                str = [str num2str(minutes, '%d'), ' minutes '];
+            end
+
+            if seconds
+                str = [str num2str(seconds, '%d'), ' seconds '];
+            end
+
+            str = [str 'elapsed'];
+        end
+
     end
 end

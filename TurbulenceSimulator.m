@@ -192,7 +192,7 @@ classdef TurbulenceSimulator<handle
                     end
 
                     phScreen = generateScreen(obj.simulationParameters);
-                    Uout0 = obj.propagateInputField(obj.simulationParameters.getInputPointSource, phScreen, wvl);
+                    Uout0 = obj.propagateInputField(obj.simulationParameters.getInputPointSource(0), phScreen, wvl);
                     Uout0 = Uout0 .* exp(-1i*vacuumPhase(:,:,1));
 
                     for iSep = 1 : nSep

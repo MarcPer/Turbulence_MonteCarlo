@@ -16,9 +16,9 @@ classdef UserInput
             end
             fprintf('Computer %s enabled.\n', shut_mode);
             
-            tic;
+            waitInputTicID = tic;
             reply_shut = 'k';
-            while (~sum(strcmpi(reply_shut, {'y', 'n', ''})) && toc < wtime)
+            while (~sum(strcmpi(reply_shut, {'y', 'n', ''})) && toc(waitInputTicID) < wtime)
                 reply_shut = waitinput(sprintf('Proceed with %s? Y/N [Y]:\n', shut_mode), ...
                     wtime, 's');
             end
