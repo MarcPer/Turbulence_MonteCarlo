@@ -1,0 +1,5 @@
+{
+	"senderEmailAddress": "sender@email.com",
+	"senderEmailPassword": "password",
+	"recipientEmailAddress": "recipient@email.com"
+}

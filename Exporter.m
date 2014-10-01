@@ -5,7 +5,7 @@ classdef Exporter
     end
     
     methods(Static)
-        function exportToDisk(results, simParams, inputFile)
+        function fileName = exportToDisk(results, simParams, inputFile)
             fileName = Exporter.getFullFilename(results, simParams.simulationType);
             fid = Exporter.getFileId(fileName);
 

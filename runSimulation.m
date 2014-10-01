@@ -36,11 +36,14 @@ tm = toc(ticID);
 disp(Util.printReadableTime(tm));
 
 % Export raw results
-Exporter.exportToDisk(results, simParams, inputFile);
+fileName = Exporter.exportToDisk(results, simParams, inputFile);
 
 % Plot results
 plotter = Plotter(simParams.simulationType);
 plotter.plot(results);
+
+% Send email with results (if configured)
+sendEmail({[fileName '.dat'], [fileName '.mat']});
 
 % Save irradiance plots to disk (disabled as figure might take considerable disk space)
 % Exporter.exportFigure(results, simParams.simulationType)
