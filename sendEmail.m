@@ -1,5 +1,6 @@
 function sendEmail(attachment)
 	if(isempty(ls('emailConfig.json')))
+		disp('No emailConfig.json file found. Email will not be sent.');
 		return;
 	end
 
