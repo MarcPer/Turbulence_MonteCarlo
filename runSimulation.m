@@ -39,7 +39,7 @@ disp(Util.printReadableTime(tm));
 fileName = Exporter.exportToDisk(results, simParams, inputFile);
 
 % Plot results
-plotter = Plotter(simParams.simulationType);
+plotter = Plotter(results.params.simulationType);
 plotter.plot(results);
 
 % Send email with results (if configured)
