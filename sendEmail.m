@@ -17,7 +17,7 @@ function sendEmail(attachment)
                   'javax.net.ssl.SSLSocketFactory');
 	props.setProperty('mail.smtp.socketFactory.port','465');
 
-	tm = datestr(clock, 'YYYY/mm/dd hh:MM:ss');
+	tm = datestr(clock, 'YYYY-mm-dd hh:MM:ss');
 
 	sendmail(emailConfig.recipientEmailAddress, ...
 		'[SUCCESS] Turbulence_MonteCarlo Results', ['Email sent at ', tm], attachment);
